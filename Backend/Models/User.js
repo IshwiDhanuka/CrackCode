@@ -6,7 +6,7 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: [true, "User name is required"],
         trim: true, // Remove whitespace from beginning and end
-        minlength: [6, "User name must be at least 2 characters long"],
+        minlength: [2, "User name must be at least 2 characters long"],
         maxlength: [20, "User name cannot exceed 50 characters"],
     },
 
