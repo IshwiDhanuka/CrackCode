@@ -1,48 +1,49 @@
-import { Routes, Route, Navigate } from "react-router-dom";
-import LoginForm from "./components/LoginForm";
-import RegisterForm from "./components/RegisterForm";
-import bgImage from "./assets/bg.jpeg";
+import { Routes, Route } from "react-router-dom";
+import Layout from "./components/Layout/layout";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+
+
+
+function Home() {
+  return (
+    <>
+      <h1 className="text-3xl font-bold mb-4">Welcome to CrackCode</h1>
+      <p className="text-gray-400 mb-2">
+        This is your neon-themed layout preview. Add your content here.
+      </p>
+      <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-[#1a1a1a] border border-cyan-500/20 rounded-xl p-6 shadow-lg">
+          <h2 className="text-xl font-semibold text-cyan-300 mb-2">Contests</h2>
+          <p className="text-gray-400 text-sm">View upcoming coding contests.</p>
+        </div>
+        <div className="bg-[#1a1a1a] border border-cyan-500/20 rounded-xl p-6 shadow-lg">
+          <h2 className="text-xl font-semibold text-cyan-300 mb-2">Problems</h2>
+          <p className="text-gray-400 text-sm">Practice DSA & CP problems.</p>
+        </div>
+        <div className="bg-[#1a1a1a] border border-cyan-500/20 rounded-xl p-6 shadow-lg">
+          <h2 className="text-xl font-semibold text-cyan-300 mb-2">Leaderboard</h2>
+          <p className="text-gray-400 text-sm">Track your rank & progress.</p>
+        </div>
+      </div>
+    </>
+  );
+}
 
 function App() {
-  const handleLogin = (credentials) => {
-    console.log("Login attempt:", credentials);
-  };
-
-  const handleRegister = async (formData) => {
-    try {
-      const response = await fetch("http://localhost:5001/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-  
-      if (!response.ok) {
-        throw new Error("Registration failed");
-      }
-  
-      const data = await response.json();
-      console.log("User registered:", data); // Success from backend
-      alert("Registration successful!");
-    } catch (err) {
-      console.error("Registration error:", err.message);
-      alert("Registration failed. Check console.");
-    }
-  };
-  
-
   return (
-    <div
-      className="w-screen h-screen bg-cover bg-center bg-no-repeat"
-      style={{ backgroundImage: `url(${bgImage})` }}
-    >
-      <Routes>
-        <Route path="/" element={<Navigate to="/login" />} />
-        <Route path="/login" element={<LoginForm onLogin={handleLogin} />} />
-        <Route path="/register" element={<RegisterForm onRegister={handleRegister} />} />
-      </Routes>
-    </div>
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route
+        path="/"
+        element={
+          <Layout>
+            <Home />
+          </Layout>
+        }
+      />
+    </Routes>
   );
 }
 
