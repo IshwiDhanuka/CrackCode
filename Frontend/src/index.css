@@ -1,14 +1,12 @@
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
 
 :root {
-  font-family: 'Orbitron', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Inter', 'Roboto', Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-
   color-scheme: dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #0f0f0f;
-
+  color: #e4e4e7;
+  background-color: #18181a;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -24,56 +22,42 @@ a:hover {
   color: #7dd3fc;
 }
 
-
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
   min-width: 320px;
   min-height: 100vh;
-  background: #0f0f0f;
+  background: #18181a;
+  font-family: 'Inter', 'Roboto', Arial, sans-serif;
 }
 
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-  font-weight: 800;
-  color: #facc15;
-  text-shadow: 0 0 10px #facc15;
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Inter', 'Roboto', Arial, sans-serif;
+  font-weight: 700;
+  color: #38bdf8;
+  text-shadow: none;
 }
-
 
 button {
   border-radius: 8px;
-  border: 1px solid transparent;
+  border: 1px solid #38bdf8;
   padding: 0.6em 1.2em;
   font-size: 1em;
   font-weight: 600;
   font-family: inherit;
-  background-color: #1a1a1a;
-  color: #fff;
+  background-color: #23272f;
+  color: #e4e4e7;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 0 8px #0ea5e9, 0 0 16px #0ea5e9;
+  transition: background 0.2s, color 0.2s, border 0.2s;
+  box-shadow: none;
 }
 button:hover {
-  border-color: #38bdf8;
-  box-shadow: 0 0 12px #38bdf8, 0 0 24px #38bdf8;
+  border-color: #7dd3fc;
+  background-color: #1e293b;
+  color: #38bdf8;
 }
 button:focus,
 button:focus-visible {
-  outline: 3px solid #38bdf8;
-}
-
-.neon-border {
-  border: 2px solid #facc15;
-  box-shadow:
-    0 0 5px #facc15,
-    0 0 10px #facc15,
-    0 0 15px #facc15;
-  transition: 0.3s ease-in-out;
-  background: rgba(255, 255, 255, 0.02);
+  outline: 2px solid #38bdf8;
 }
 
 @media (prefers-color-scheme: light) {

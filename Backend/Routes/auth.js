@@ -4,6 +4,8 @@ const User = require('../Models/User');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
+console.log('Auth routes loaded');
+
 //Register route
 router.post("/register", async (req, res) => {
   const { username, email, password, role } = req.body;
@@ -64,9 +66,10 @@ router.post("/register", async (req, res) => {
 
 //Login route
 router.post("/login", async (req, res) => {
+  console.log("Login request body:", req.body); // Debug log
   const { email, password } = req.body;
 
-  if (!(!email?.trim() || !password?.trim())) {
+  if (!email?.trim() || !password?.trim()) {
     return res.status(400).json({
       success: false,
       message: "Please enter both email and password"

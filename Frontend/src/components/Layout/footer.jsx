@@ -1,6 +1,6 @@
 import { Code, Github, Twitter, Mail } from 'lucide-react';
 
-const footer = () => {
+const Footer = () => {
   return (
     <footer className="bg-black text-white font-sans">
       <div className="max-w-7xl mx-auto px-6 py-12">
@@ -46,7 +46,7 @@ const footer = () => {
 
         <div className="border-t border-gray-800 mt-10 pt-6 text-center">
           <p className="text-gray-500 text-sm">
-            © 2025 <span className="text-cyan-400 font-medium">CrackCode</span>. Built with ⚡ and caffeine by passionate devs.
+            © 2025 <span className="text-cyan-400 font-medium">CrackCode</span>. Built with ⚡ and caffeine by a passionate dev.
           </p>
         </div>
       </div>
@@ -54,4 +54,4 @@ const footer = () => {
   );
 };
 
-export default footer;
+export default Footer;

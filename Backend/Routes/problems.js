@@ -68,6 +68,12 @@ router.post('/', adminMiddleware, async (req, res) => {
       await Testcase.insertMany(tcDocs);
     }
 
+    // Emit websocket event for new problem
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('problemAdded', { slug, title, difficulty });
+    }
+
     res.status(201).json({ success: true, message: 'Problem created', problem });
   } catch (err) {
     console.error('Create problem error:', err);

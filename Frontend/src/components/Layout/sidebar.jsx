@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   Home,
@@ -11,8 +10,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 
-const Sidebar = () => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   const location = useLocation();
 
   const menuItems = [
@@ -49,7 +47,7 @@ const Sidebar = () => {
       </div>
 
       {/* Menu Items */}
-      <nav className="mt-6 space-y-1">
+      <nav className="mt-6 space-y-1 px-2">
         {menuItems.map(({ icon: Icon, label, path }) => {
           const isActive = location.pathname === path;
 
@@ -57,7 +55,7 @@ const Sidebar = () => {
             <Link
               key={path}
               to={path}
-              className={`flex items-center px-4 py-3 transition-all duration-200 hover:bg-cyan-800/20 rounded-md ${
+              className={`flex items-center px-3 py-2 transition-all duration-200 hover:bg-cyan-800/20 rounded-md ${
                 isActive ? 'bg-cyan-500/20 text-cyan-300' : 'text-gray-300'
               }`}
             >
