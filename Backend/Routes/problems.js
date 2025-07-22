@@ -49,14 +49,14 @@ router.get('/:slug', async (req, res) => {
 // Add a new problem 
 router.post('/', adminMiddleware, async (req, res) => {
   try {
-    const { title, slug, description, difficulty, tags, constraints, examples, testcases } = req.body;
+    const { title, slug, description, difficulty, tags, constraints, examples, testcases, functionName, className, arguments: args, returnType } = req.body;
 
     const exists = await Problem.findOne({ slug });
     if (exists) {
       return res.status(400).json({ success: false, message: 'Slug already exists' });
     }
 
-    const problem = await Problem.create({ title, slug, description, difficulty, tags, constraints, examples });
+    const problem = await Problem.create({ title, slug, description, difficulty, tags, constraints, examples, functionName, className, arguments: args, returnType });
 
     if (Array.isArray(testcases)) {
       const tcDocs = testcases.map(tc => ({
@@ -84,11 +84,11 @@ router.post('/', adminMiddleware, async (req, res) => {
 //  Update a problem 
 router.put('/:slug', adminMiddleware, async (req, res) => {
   try {
-    const { title, description, difficulty, tags, constraints, examples, testcases } = req.body;
+    const { title, description, difficulty, tags, constraints, examples, testcases, functionName, className, arguments: args, returnType } = req.body;
 
     const problem = await Problem.findOneAndUpdate(
       { slug: req.params.slug },
-      { title, description, difficulty, tags, constraints, examples },
+      { title, description, difficulty, tags, constraints, examples, functionName, className, arguments: args, returnType },
       { new: true }
     );
 
@@ -97,8 +97,7 @@ router.put('/:slug', adminMiddleware, async (req, res) => {
     }
 
     await Testcase.deleteMany({ problemId: problem._id });
-
-    if (Array.isArray(testcases)) {
+    if (Array.isArray(testcases) && testcases.length > 0) {
       const tcDocs = testcases.map(tc => ({
         problemId: problem._id,
         input: tc.input,

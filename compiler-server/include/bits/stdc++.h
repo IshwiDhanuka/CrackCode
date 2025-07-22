@@ -1,0 +1,20 @@
+// Custom bits/stdc++.h for macOS/Linux compatibility
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <string>
+#include <queue>
+#include <stack>
+#include <map>
+#include <set>
+#include <unordered_map>
+#include <unordered_set>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cassert>
+#include <climits>
+#include <cctype>
+#include <ctime>
+#include <sstream>

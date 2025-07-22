@@ -32,6 +32,21 @@ const problemSchema = new mongoose.Schema({
     output: String,
     explanation: String
   }],
+  functionName: {
+    type: String,
+    required: true
+  },
+  className: {
+    type: String
+  },
+  arguments: {
+    type: String,
+    required: true
+  },
+  returnType: {
+    type: String,
+    required: true
+  },
   created_at: {
     type: Date,
     default: Date.now

@@ -25,11 +25,8 @@ const Register = () => {
     try {
       const { data } = await axios.post("http://localhost:5001/api/auth/register", formData);
 
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-
-      toast.success('Registration successful!');
-      setTimeout(() => navigate("/"), 1500); // Give user time to see the toast
+      toast.success('Registration successful! Please login.');
+      setTimeout(() => navigate("/login"), 1500); // Redirect to login page
     } catch (err) {
       setErrorMsg(err.response?.data?.message || "Registration failed");
     }

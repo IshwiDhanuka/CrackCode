@@ -7,6 +7,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { toast } from 'react-toastify';
 import Problems from './pages/Problems';
 import AdminProblems from './pages/AdminProblems';
+import Solve from './pages/Solve';
 
 
 function Home() {
@@ -54,6 +55,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/problems" element={<Problems />} />
         <Route path="/adminproblems" element={<AdminProblems />} />
+        <Route path="/solve/:slug" element={<Solve />} />
         <Route
           path="/"
           element={

@@ -1,7 +1,6 @@
 // src/pages/Problems.jsx
 import { useEffect, useState } from 'react';
-import Sidebar from '../components/Layout/sidebar';
-import Header from '../components/Layout/header';
+import Layout from '../components/Layout/layout';
 import { CheckCircle, Circle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -66,14 +65,8 @@ const Problems = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black flex flex-col">
-      <Header toggleSidebar={() => setIsSidebarCollapsed(v => !v)} isSidebarCollapsed={isSidebarCollapsed} />
-      <div className="flex flex-1">
-        {/* Sidebar */}
-        <Sidebar isCollapsed={isSidebarCollapsed} setIsCollapsed={setIsSidebarCollapsed} />
-        {/* Main Content - Centered and fills available space */}
-        <main className={`flex-1 ml-${isSidebarCollapsed ? '16' : '64'} transition-all duration-300 px-4 py-8 flex flex-col items-center justify-start`}> {/* left margin for sidebar */}
-          <div className="w-full max-w-4xl">
+    <Layout>
+      <div className="w-full max-w-4xl mx-auto">
             {/* Manage Button inline with Problems List heading */}
             <div className="flex items-center justify-between mb-4">
               <h1 className="text-2xl font-bold text-cyan-400">Problems List</h1>
@@ -125,7 +118,7 @@ const Problems = () => {
                     <div className={getColor(p.difficulty)}>{p.difficulty}</div>
                     <div className="text-sm text-gray-400">{typeof p.percentage === 'number' ? p.percentage.toFixed(1) + '%' : '--'}</div>
                     <div>
-                      <button className="text-sm text-cyan-400 hover:text-cyan-300 border border-cyan-500 px-3 py-1 rounded">Solve</button>
+                  <button className="text-sm text-cyan-400 hover:text-cyan-300 border border-cyan-500 px-3 py-1 rounded" onClick={() => navigate(`/solve/${p.slug}`)}>Solve</button>
                     </div>
                   </div>
                 ))}
@@ -135,9 +128,7 @@ const Problems = () => {
               </div>
             </div>
           </div>
-        </main>
-      </div>
-    </div>
+    </Layout>
   );
 };
 

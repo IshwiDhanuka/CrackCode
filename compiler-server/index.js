@@ -16,7 +16,7 @@ app.get("/", (req, res) => {
 
 
 app.post("/run", async (req, res) => {
-    const { language = 'cpp', code, input = '' } = req.body;
+    const { language = 'cpp', code, input = '', testcases, functionName, className, arguments: args } = req.body;
 
     if (!code || code.trim() === '') {
         return res.status(400).json({
@@ -25,17 +25,48 @@ app.post("/run", async (req, res) => {
         });
     }
 
+    // Batch test case mode
+    if (Array.isArray(testcases) && testcases.length > 0) {
+        try {
+            const results = [];
+            for (const tc of testcases) {
+                const filePath = await generateFile(language, code, { functionName, className, arguments: args });
+                const inputPath = await generateInputFile(tc.input || '');
+                try {
+                    const output = await executeCpp(filePath, inputPath);
+                    const cleanedOutput = (output || '').trim();
+                    const cleanedExpected = (tc.expectedOutput || '').trim();
+                    results.push({
+                        input: tc.input,
+                        expectedOutput: tc.expectedOutput,
+                        output: cleanedOutput,
+                        passed: cleanedOutput === cleanedExpected
+                    });
+                } catch (err) {
+                    results.push({
+                        input: tc.input,
+                        expectedOutput: tc.expectedOutput,
+                        output: err.error || String(err),
+                        passed: false,
+                        error: true
+                    });
+                }
+            }
+            return res.json({ success: true, results });
+        } catch (error) {
+            return res.status(500).json({ success: false, error: String(error) });
+        }
+    }
+
+    // Single input mode (default)
     try {
-        const filePath = await generateFile(language, code);
+        const filePath = await generateFile(language, code, { functionName, className, arguments: args });
         const inputPath = await generateInputFile(input);
-
         const output = await executeCpp(filePath, inputPath);
-
         return res.json({
             success: true,
             output
         });
-
     } catch (error) {
         console.error(' Error executing code:', error);
 

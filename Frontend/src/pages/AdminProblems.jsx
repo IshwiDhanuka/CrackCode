@@ -34,11 +34,27 @@ const AdminProblems = () => {
   const handleDelete = async (slug) => {
     if (!window.confirm('Are you sure you want to delete this problem?')) return;
     try {
-      await axios.delete(`http://localhost:5001/api/problems/${slug}`);
+      const token = localStorage.getItem('token');
+      await axios.delete(`http://localhost:5001/api/problems/${slug}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       toast.success('Problem deleted');
       fetchProblems();
     } catch (err) {
       toast.error('Failed to delete problem');
+    }
+  };
+
+  const handleEdit = async (slug) => {
+    try {
+      const res = await axios.get(`http://localhost:5001/api/problems/${slug}`);
+      setEditProblem({
+        ...res.data.problem,
+        testcases: res.data.testcases || [],
+      });
+      setShowForm(true);
+    } catch (err) {
+      toast.error('Failed to fetch problem details');
     }
   };
 
@@ -88,7 +104,7 @@ const AdminProblems = () => {
               <div className="flex gap-2">
                 <button
                   className="p-1 rounded hover:bg-cyan-900"
-                  onClick={() => { setEditProblem(p); setShowForm(true); }}
+                  onClick={() => handleEdit(p.slug)}
                   title="Edit"
                 >
                   <Edit size={18} />

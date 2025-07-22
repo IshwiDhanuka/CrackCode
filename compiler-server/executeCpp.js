@@ -17,23 +17,28 @@ const executeCpp = (filePath, inputPath) => {
   const runCommand = `"${exePath}" < "${inputPath}"`;
 
   return new Promise((resolve, reject) => {
-    const compileCommand = `g++ -std=c++20 "${filePath}" -o "${exePath}" && ${runCommand}`;
+    const compileCommand = `g++ -std=c++20 -I ${path.join(__dirname, 'include')} "${filePath}" -o "${exePath}" && ${runCommand}`;
     console.log("🔧 Running command:", compileCommand);
 
-    exec(compileCommand, { shell: true }, (error, stdout, stderr) => {
+    exec(compileCommand, { shell: true, timeout: 2000 }, (error, stdout, stderr) => {
       console.log(" stdout:", stdout);
       console.log("stderr:", stderr);
       console.log(" error:", error);
 
       try {
-        fs.unlinkSync(filePath);
+       fs.unlinkSync(filePath);
         fs.unlinkSync(inputPath);
         if (fs.existsSync(exePath)) fs.unlinkSync(exePath);
       } catch (cleanupErr) {
-        console.warn("🧹 Cleanup warning:", cleanupErr.message);
+        console.warn(" Cleanup warning:", cleanupErr.message);
       }
 
-      if (error) return reject({ error: stderr || error.message });
+      if (error) {
+        if (error.killed || error.signal === 'SIGTERM' || error.code === 'ETIMEDOUT') {
+          return reject({ error: 'Time Limit Exceeded' });
+        }
+        return reject({ error: stderr || error.message });
+      }
       if (stderr) return reject({ error: stderr });
       return resolve(stdout);
     });

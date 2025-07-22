@@ -4,7 +4,7 @@ import Sidebar from "./sidebar";
 import { useState } from "react";
 
 const Layout = ({ children }) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true); // Collapsed by default
 
   const sidebarWidth = isCollapsed ? "4rem" : "16rem"; // 64px or 256px
 
@@ -20,7 +20,7 @@ const Layout = ({ children }) => {
           marginLeft: sidebarWidth,
         }}
       >
-        <Header />
+        <Header isSidebarCollapsed={isCollapsed} toggleSidebar={() => setIsCollapsed(v => !v)} />
         <main className="flex-1 p-4 overflow-x-auto">
           <div className="w-full">{children}</div>
         </main>

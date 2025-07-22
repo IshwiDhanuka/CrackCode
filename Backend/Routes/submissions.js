@@ -62,4 +62,20 @@ router.post('/', authMiddleware, async (req, res) => {
   }
 });
 
+// Get all submissions for a user and problem
+router.get('/', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { problemId } = req.query;
+    if (!problemId) {
+      return res.status(400).json({ success: false, message: 'problemId is required' });
+    }
+    const submissions = await Submission.find({ userId, problemId }).sort({ submissionTime: -1 });
+    res.json({ success: true, submissions });
+  } catch (error) {
+    console.error('Fetch submissions error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error.' });
+  }
+});
+
 module.exports = router;
