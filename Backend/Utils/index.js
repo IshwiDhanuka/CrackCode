@@ -3,6 +3,7 @@ const cors = require("cors");
 const adminRoutes = require('../Routes/admin');
 const authRoutes = require('../Routes/auth');
 const problemsRoutes = require('../Routes/problems');
+const profileRoutes = require('../Routes/profile');
 
 require('dotenv').config();
 
@@ -26,6 +27,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/admin', adminRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/problems', problemsRoutes);
+app.use('/api/user', profileRoutes);
 
 DBConnection();
 

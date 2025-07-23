@@ -94,6 +94,44 @@ router.post("/login", async (req, res) => {
       });
     }
 
+    // --- Streak and loginHistory logic ---
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    let loginHistory = user.loginHistory || [];
+    let streak = user.streak || 0;
+    if (!loginHistory.some(date => new Date(date).getTime() === today.getTime())) {
+      // Add today to loginHistory
+      loginHistory.push(today);
+      // Sort and keep only unique days
+      loginHistory = Array.from(new Set(loginHistory.map(d => new Date(d).setHours(0,0,0,0)))).map(ts => new Date(ts));
+      loginHistory.sort((a, b) => a - b);
+      // Calculate streak
+      streak = 1;
+      for (let i = loginHistory.length - 2; i >= 0; i--) {
+        const diff = (loginHistory[i+1] - loginHistory[i]) / (1000*60*60*24);
+        if (diff === 1) streak++;
+        else if (diff > 1) break;
+      }
+    }
+    // --- Badges logic ---
+    let badges = user.badges || [];
+    const badgeTemplates = [
+      { name: "Streak 3 Days", icon: "🔥", condition: s => s >= 3 },
+      { name: "Streak 7 Days", icon: "🔥", condition: s => s >= 7 },
+      { name: "100 Problems", icon: "🏅", condition: () => (user.problemsSolved || 0) >= 100 },
+      { name: "Early Bird", icon: "🌅", condition: () => true }
+    ];
+    badgeTemplates.forEach(b => {
+      if (b.condition(streak) && !badges.some(bad => bad.name === b.name)) {
+        badges.push({ name: b.name, icon: b.icon, achievedAt: new Date() });
+      }
+    });
+    // Save user
+    user.loginHistory = loginHistory;
+    user.streak = streak;
+    user.badges = badges;
+    await user.save();
+
     const token = jwt.sign(
       { id: user._id, email: user.email, role: user.role },
       process.env.SECRET_KEY,
@@ -108,7 +146,9 @@ router.post("/login", async (req, res) => {
         username: user.username,
         email: user.email,
         role: user.role,
-        createdAt: user.createdAt
+        createdAt: user.createdAt,
+        streak: user.streak,
+        badges: user.badges
       },
       token
     });

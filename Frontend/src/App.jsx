@@ -8,6 +8,10 @@ import { toast } from 'react-toastify';
 import Problems from './pages/Problems';
 import AdminProblems from './pages/AdminProblems';
 import Solve from './pages/Solve';
+import Profile from './pages/Profile';
+import Contests from './pages/Contests';
+import Learning from './pages/Learning';
+import Settings from './pages/Settings';
 
 
 function Home() {
@@ -56,6 +60,10 @@ function App() {
         <Route path="/problems" element={<Problems />} />
         <Route path="/adminproblems" element={<AdminProblems />} />
         <Route path="/solve/:slug" element={<Solve />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/contests" element={<Contests />} />
+        <Route path="/learning" element={<Learning />} />
+        <Route path="/settings" element={<Settings />} />
         <Route
           path="/"
           element={

@@ -28,7 +28,31 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: 'user',
         enum: ['user', 'admin']
-      }
+      },
+    // Additions for profile features
+    solvedProblems: {
+        type: [String],
+        default: []
+    },
+    problemsSolved: {
+        type: Number,
+        default: 0
+    },
+    loginHistory: {
+        type: [Date],
+        default: []
+    },
+    streak: {
+        type: Number,
+        default: 0
+    },
+    badges: [
+        {
+            name: String,
+            icon: String,
+            achievedAt: Date
+        }
+    ]
     
 }, {
     timestamps: true

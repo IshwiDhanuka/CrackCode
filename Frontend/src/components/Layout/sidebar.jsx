@@ -65,17 +65,6 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           );
         })}
       </nav>
-
-      {/* Progress Section */}
-      {!isCollapsed && (
-        <div className="absolute bottom-4 left-4 right-4 bg-gradient-to-br from-[#111] to-[#1a1a1a] border border-cyan-500/10 rounded-xl p-4 text-sm shadow-lg">
-          <p className="text-cyan-400 font-medium mb-1">Progress</p>
-          <p className="text-white font-semibold">42 Problems Solved</p>
-          <div className="w-full bg-gray-700 rounded-full h-2 mt-2">
-            <div className="bg-cyan-400 h-2 rounded-full" style={{ width: '65%' }} />
-          </div>
-        </div>
-      )}
     </div>
   );
 };

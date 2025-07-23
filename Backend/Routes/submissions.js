@@ -78,4 +78,20 @@ router.get('/', authMiddleware, async (req, res) => {
   }
 });
 
+// Get recent submissions for a user
+router.get('/recent', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const limit = parseInt(req.query.limit) || 10;
+    const submissions = await Submission.find({ userId })
+      .sort({ submissionTime: -1 })
+      .limit(limit)
+      .populate('problemId', 'title');
+    res.json({ success: true, submissions });
+  } catch (error) {
+    console.error('Fetch recent submissions error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error.' });
+  }
+});
+
 module.exports = router;
