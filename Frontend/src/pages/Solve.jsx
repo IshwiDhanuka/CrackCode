@@ -41,6 +41,9 @@ const Solve = () => {
   const [submissionsLoading, setSubmissionsLoading] = useState(false);
   const [showResultModal, setShowResultModal] = useState(false);
   const [resultStats, setResultStats] = useState({ verdict: '', passed: 0, total: 0, runtime: null });
+  const [aiReview, setAIReview] = useState('');
+  const [aiHint, setAIHint] = useState('');
+  const [aiLoading, setAILoading] = useState(false);
 
   useEffect(() => {
     const fetchProblem = async () => {
@@ -191,6 +194,32 @@ const Solve = () => {
     setSubmitLoading(false);
   };
 
+  // AI Review
+  const getReview = async () => {
+    setAILoading(true);
+    setAIReview('');
+    try {
+      const res = await axios.post('/api/ai/review', { code, problem: problem?.description || '' });
+      setAIReview(res.data.review);
+    } catch (err) {
+      setAIReview('AI review failed.');
+    }
+    setAILoading(false);
+  };
+
+  // AI Hint
+  const getHint = async () => {
+    setAILoading(true);
+    setAIHint('');
+    try {
+      const res = await axios.post('/api/ai/hint', { problem: problem?.description || '' });
+      setAIHint(res.data.hint);
+    } catch (err) {
+      setAIHint('AI hint failed.');
+    }
+    setAILoading(false);
+  };
+
   const sampleTestcases = testcases.filter(tc => tc.isSample);
   const hiddenTestcases = testcases.filter(tc => !tc.isSample);
 
@@ -300,7 +329,33 @@ const Solve = () => {
               >
                 {submitLoading ? 'Submitting...' : 'Submit'}
               </button>
+              {/* AI Buttons */}
+              <button
+                className="bg-[#6c47ff] hover:bg-[#8f5fff] text-white font-semibold px-6 py-2 rounded-md shadow transition text-xs"
+                onClick={getReview}
+                disabled={aiLoading}
+              >
+                AI Review
+              </button>
+              <button
+                className="bg-[#ffb300] hover:bg-[#ffd54f] text-black font-semibold px-6 py-2 rounded-md shadow transition text-xs"
+                onClick={getHint}
+                disabled={aiLoading}
+              >
+                AI Hint
+              </button>
             </div>
+            {aiLoading && <div className="text-cyan-300 mt-2">Loading AI response...</div>}
+            {aiReview && (
+              <div className="mt-4 bg-[#181d29] border-l-4 border-[#6c47ff] text-white p-4 rounded shadow">
+                <b>AI Review:</b> <br />{aiReview}
+              </div>
+            )}
+            {aiHint && (
+              <div className="mt-4 bg-[#181d29] border-l-4 border-[#ffb300] text-white p-4 rounded shadow">
+                <b>AI Hint:</b> <br />{aiHint}
+              </div>
+            )}
             {/* Test Cases Section */}
             
             {/* Testcase/Test Result Panel */}

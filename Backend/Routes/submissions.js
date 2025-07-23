@@ -63,14 +63,15 @@ router.post('/', authMiddleware, async (req, res) => {
 });
 
 // Get all submissions for a user and problem
-router.get('/', authMiddleware, async (req, res) => {
+router.get('/', async (req, res) => {
+  console.log('Submissions route hit', req.query);
   try {
-    const userId = req.user._id;
+    // const userId = req.user._id; // Not using auth for debugging
     const { problemId } = req.query;
     if (!problemId) {
       return res.status(400).json({ success: false, message: 'problemId is required' });
     }
-    const submissions = await Submission.find({ userId, problemId }).sort({ submissionTime: -1 });
+    const submissions = await Submission.find({ problemId }).sort({ submissionTime: -1 });
     res.json({ success: true, submissions });
   } catch (error) {
     console.error('Fetch submissions error:', error);

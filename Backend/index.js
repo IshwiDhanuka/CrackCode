@@ -1,13 +1,15 @@
 const express = require('express');
 const cors = require("cors");
-const adminRoutes = require('../Routes/admin');
-const authRoutes = require('../Routes/auth');
-const problemsRoutes = require('../Routes/problems');
-const profileRoutes = require('../Routes/profile');
+const adminRoutes = require('./Routes/admin');
+const authRoutes = require('./Routes/auth');
+const problemsRoutes = require('./Routes/problems');
+const profileRoutes = require('./Routes/profile');
+const aiRoutes = require('./Routes/ai');
+const submissionsRoutes = require('./Routes/submissions');
 
 require('dotenv').config();
 
-const { DBConnection } = require("../Database/db");
+const { DBConnection } = require("./Database/db");
 
 const app = express();
 
@@ -28,6 +30,8 @@ app.use('/admin', adminRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/problems', problemsRoutes);
 app.use('/api/user', profileRoutes);
+app.use('/api/ai', aiRoutes);
+app.use('/api/submissions', submissionsRoutes);
 
 DBConnection();
 
