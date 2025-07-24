@@ -241,6 +241,7 @@ const Solve = () => {
                   {problem.difficulty}
                 </span>
               )}
+              <span className="px-3 py-1 rounded-full bg-cyan-900/80 text-cyan-200 text-xs font-bold border border-cyan-400/40 shadow">Points: {problem?.difficulty === 'Easy' ? 10 : problem?.difficulty === 'Medium' ? 20 : problem?.difficulty === 'Hard' ? 30 : '--'}</span>
               {(Array.isArray(problem?.tags)
                 ? problem.tags.map(t => t.replace(/[{}]/g, '').trim())
                 : (typeof problem?.tags === 'string'

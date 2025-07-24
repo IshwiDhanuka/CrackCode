@@ -102,23 +102,27 @@ const Problems = () => {
             {/* Problems Table */}
             <div className="flex-1 overflow-x-auto">
               <div className="min-w-[700px] bg-[#111] rounded-lg overflow-hidden border border-gray-800">
-                <div className="grid grid-cols-6 py-3 px-4 bg-[#1c1c1c] text-sm font-semibold text-gray-400">
+                <div className="grid grid-cols-7 py-3 px-4 bg-[#1c1c1c] text-sm font-semibold text-gray-400">
                   <div>Status</div>
                   <div className="col-span-2">Title</div>
                   <div>Difficulty</div>
+                  <div>Points</div>
                   <div>Solved %</div>
                   <div>Action</div>
                 </div>
                 {filteredProblems.map((p, i) => (
-                  <div key={p.slug || p.id || i} className="grid grid-cols-6 items-center py-3 px-4 border-t border-gray-800 hover:bg-[#1a1a1a] transition">
+                  <div key={p.slug || p.id || i} className="grid grid-cols-7 items-center py-3 px-4 border-t border-gray-800 hover:bg-[#1a1a1a] transition">
                     <div>{p.solved ? <CheckCircle size={20} className="text-green-400" /> : <Circle size={20} className="text-gray-500" />}</div>
                     <div className="col-span-2">
                       <span className="text-cyan-300">{i + 1}. {p.title}</span>
                     </div>
                     <div className={getColor(p.difficulty)}>{p.difficulty}</div>
+                    <div className="text-cyan-200 font-semibold text-center">
+                      {p.difficulty === 'Easy' ? 10 : p.difficulty === 'Medium' ? 20 : p.difficulty === 'Hard' ? 30 : '--'}
+                    </div>
                     <div className="text-sm text-gray-400">{typeof p.percentage === 'number' ? p.percentage.toFixed(1) + '%' : '--'}</div>
                     <div>
-                  <button className="text-sm text-cyan-400 hover:text-cyan-300 border border-cyan-500 px-3 py-1 rounded" onClick={() => navigate(`/solve/${p.slug}`)}>Solve</button>
+                      <button className="text-sm text-cyan-400 hover:text-cyan-300 border border-cyan-500 px-3 py-1 rounded" onClick={() => navigate(`/solve/${p.slug}`)}>Solve</button>
                     </div>
                   </div>
                 ))}

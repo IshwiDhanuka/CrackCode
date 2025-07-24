@@ -79,6 +79,10 @@ export default function Profile() {
               </div>
             </div>
             <div>
+              <div className="text-gray-400 text-base">Points</div>
+              <div className="text-2xl font-semibold text-yellow-300">{profile.points || 0}</div>
+            </div>
+            <div>
               <div className="text-gray-400 text-base">Accuracy</div>
               <div className="text-2xl font-semibold text-cyan-200">{profile.accuracy || '—'}%</div>
             </div>

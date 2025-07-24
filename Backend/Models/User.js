@@ -52,7 +52,11 @@ const userSchema = new mongoose.Schema({
             icon: String,
             achievedAt: Date
         }
-    ]
+    ],
+    points: {
+        type: Number,
+        default: 0
+    }
     
 }, {
     timestamps: true

@@ -39,12 +39,21 @@ router.post('/', authMiddleware, async (req, res) => {
     // Update solvedProblems if status is "Accepted"
     if (status === 'Accepted') {
       const user = await User.findById(userId);
-
-      if (!user.solvedProblems.includes(problemId)) {
-        user.solvedProblems.push(problemId);
+      const problem = await mongoose.model('Problem').findById(problemId);
+      const pid = problemId.toString();
+      console.log('Problem difficulty:', problem ? problem.difficulty : 'undefined', 'for problemId:', problemId);
+      if (!user.solvedProblems.includes(pid)) {
+        user.solvedProblems.push(pid);
         user.problemsSolved = user.solvedProblems.length;
+        // Award points based on problem difficulty
+        let pointsToAdd = 0;
+        if (problem.difficulty === 'Easy') pointsToAdd = 10;
+        else if (problem.difficulty === 'Medium') pointsToAdd = 20;
+        else if (problem.difficulty === 'Hard') pointsToAdd = 30;
+        console.log('Points to add:', pointsToAdd, 'Current user points:', user.points);
+        user.points = (user.points || 0) + pointsToAdd;
         await user.save();
-        console.log('  User solvedProblems updated.');
+        console.log('  User solvedProblems and points updated.');
       }
     }
 

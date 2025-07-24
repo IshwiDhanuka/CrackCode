@@ -141,9 +141,19 @@ router.post('/submit/:problemId', authMiddleware, async (req, res) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    if (!user.solvedProblems.includes(problemId)) {
-      user.solvedProblems.push(problemId);
+    const pid = problemId.toString();
+    const problem = await Problem.findById(problemId);
+    console.log('Problem difficulty:', problem ? problem.difficulty : 'undefined', 'for problemId:', problemId);
+    if (!user.solvedProblems.includes(pid)) {
+      user.solvedProblems.push(pid);
       user.problemsSolved = user.solvedProblems.length;
+      // Award points based on problem difficulty
+      let pointsToAdd = 0;
+      if (problem && problem.difficulty === 'Easy') pointsToAdd = 10;
+      else if (problem && problem.difficulty === 'Medium') pointsToAdd = 20;
+      else if (problem && problem.difficulty === 'Hard') pointsToAdd = 30;
+      console.log('Points to add:', pointsToAdd, 'Current user points:', user.points);
+      user.points = (user.points || 0) + pointsToAdd;
       await user.save();
     }
 
