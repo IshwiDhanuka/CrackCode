@@ -6,7 +6,6 @@ const problemsRoutes = require('./Routes/problems');
 const profileRoutes = require('./Routes/profile');
 const aiRoutes = require('./Routes/ai');
 const submissionsRoutes = require('./Routes/submissions');
-
 require('dotenv').config();
 
 const { DBConnection } = require("./Database/db");
@@ -20,7 +19,7 @@ app.use((req, res, next) => {
 });
 
 app.use(cors({
-  origin: "http://localhost:5173",
+  origin: "http://localhost:5173", 
   credentials: true,
 }));
 
@@ -52,7 +51,7 @@ const server = app.listen(PORT, () => {
 const { Server } = require('socket.io');
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: "http://localhost:5173", 
     methods: ["GET", "POST"]
   }
 });
