@@ -21,6 +21,9 @@ const getDifficultyColor = (difficulty) => {
   }
 };
 
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
+const compilerUrl = import.meta.env.VITE_COMPILER_URL;
+
 const Solve = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
@@ -48,7 +51,7 @@ const Solve = () => {
   useEffect(() => {
     const fetchProblem = async () => {
       try {
-        const res = await fetch(`http://localhost:5001/api/problems/${slug}`);
+        const res = await fetch(`${backendUrl}/api/problems/${slug}`);
         const data = await res.json();
         if (data.success) {
           setProblem(data.problem);
@@ -82,7 +85,7 @@ const Solve = () => {
     setSubmissionsLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get(`http://localhost:5001/api/submissions?problemId=${problem._id}`, {
+      const res = await axios.get(`${backendUrl}/api/submissions?problemId=${problem._id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.data.success) setSubmissions(res.data.submissions || []);
@@ -103,7 +106,7 @@ const Solve = () => {
     setSubmitVerdict(null);
     try {
       const sampleCases = testcases.filter(tc => tc.isSample);
-      const res = await fetch('http://localhost:8000/run', {
+      const res = await fetch(`${compilerUrl}/run`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -137,7 +140,7 @@ const Solve = () => {
     setSubmitVerdict(null);
     try {
       const startTime = Date.now();
-      const res = await fetch('http://localhost:8000/run', {
+      const res = await fetch(`${compilerUrl}/run`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -175,7 +178,7 @@ const Solve = () => {
       // Save submission to backend (if you want to keep this for analytics, otherwise remove)
       try {
         const token = localStorage.getItem('token');
-        await axios.post('http://localhost:5001/api/submissions', {
+        await axios.post(`${backendUrl}/api/submissions`, {
           problemId: problem._id,
           status: verdict,
           language,

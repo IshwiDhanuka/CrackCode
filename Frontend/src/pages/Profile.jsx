@@ -3,6 +3,7 @@ import axios from 'axios';
 import '../pages/solve-neon.css';
 
 const TABS = ["Overview", "Submissions", "Solved", "Settings"];
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 export default function Profile() {
   const [profile, setProfile] = useState(null);
@@ -12,14 +13,14 @@ export default function Profile() {
   useEffect(() => {
     const fetchProfile = async () => {
       const token = localStorage.getItem('token');
-      const res = await axios.get('http://localhost:5001/api/user/profile', {
+      const res = await axios.get(`${backendUrl}/api/user/profile`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setProfile(res.data.user);
     };
     const fetchRecentActivity = async () => {
       const token = localStorage.getItem('token');
-      const res = await axios.get('http://localhost:5001/api/submissions/recent?limit=10', {
+      const res = await axios.get(`${backendUrl}/api/submissions/recent?limit=10`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setRecentActivity(res.data.submissions);

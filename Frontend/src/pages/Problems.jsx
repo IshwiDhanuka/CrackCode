@@ -8,6 +8,9 @@ import { io } from 'socket.io-client';
 
 const topics = ['All Topics', 'Array', 'Linked List', 'String', 'Hash Table', 'Math'];
 
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
+
 const getColor = (difficulty) => {
   switch (difficulty) {
     case 'Easy': return 'text-green-400';
@@ -27,7 +30,7 @@ const Problems = () => {
   // Fetch problems from backend
   const fetchProblems = async () => {
     try {
-      const res = await fetch('http://localhost:5001/api/problems/');
+      const res = await fetch(`${backendUrl}/api/problems/`);
       const data = await res.json();
       setProblems(data.problems || []);
     } catch (err) {
@@ -38,7 +41,7 @@ const Problems = () => {
   useEffect(() => {
     fetchProblems();
     // WebSocket connection
-    const socket = io('http://localhost:5001');
+    const socket = io(backendUrl);
     socket.on('problemAdded', () => {
       fetchProblems();
     });

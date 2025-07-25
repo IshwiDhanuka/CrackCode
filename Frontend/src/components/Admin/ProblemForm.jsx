@@ -94,6 +94,7 @@ export default function ProblemForm({ problem, onClose, onSaved }) {
       testcases: form.testcases.filter((_, i) => i !== idx)
     });
   };
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   const handleSubmit = async e => {
     e.preventDefault();
@@ -109,7 +110,7 @@ export default function ProblemForm({ problem, onClose, onSaved }) {
         }))
         .filter(tc => tc.input.trim() !== '');
       if (isEdit) {
-        await axios.put(`http://localhost:5001/api/problems/${problem.slug}`, {
+        await axios.put(`${backendUrl}/api/problems/${problem.slug}`, {
           ...form,
           tags: form.tags.split(',').map(t => t.trim()),
           examples,
@@ -121,7 +122,7 @@ export default function ProblemForm({ problem, onClose, onSaved }) {
         }, config);
         toast.success('Problem updated!');
       } else {
-      await axios.post('http://localhost:5001/api/problems/', {
+      await axios.post(`${backendUrl}/api/problems/`, {
         ...form,
         tags: form.tags.split(',').map(t => t.trim()),
         examples,

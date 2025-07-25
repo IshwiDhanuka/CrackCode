@@ -9,6 +9,7 @@ const isAdmin = () => {
   const user = JSON.parse(localStorage.getItem('user'));
   return user && user.role === 'admin';
 };
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 const AdminProblems = () => {
   const [problems, setProblems] = useState([]);
@@ -23,7 +24,7 @@ const AdminProblems = () => {
   const fetchProblems = async () => {
     setLoading(true);
     try {
-      const res = await axios.get('http://localhost:5001/api/problems/');
+      const res = await axios.get(`${backendUrl}/api/problems/`);
       setProblems(res.data.problems || []);
     } catch (err) {
       toast.error('Failed to fetch problems');
@@ -35,7 +36,7 @@ const AdminProblems = () => {
     if (!window.confirm('Are you sure you want to delete this problem?')) return;
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`http://localhost:5001/api/problems/${slug}`, {
+      await axios.delete(`${backendUrl}/api/problems/${slug}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       toast.success('Problem deleted');
@@ -47,7 +48,7 @@ const AdminProblems = () => {
 
   const handleEdit = async (slug) => {
     try {
-      const res = await axios.get(`http://localhost:5001/api/problems/${slug}`);
+      const res = await axios.get(`${backendUrl}/api/problems/${slug}`);
       setEditProblem({
         ...res.data.problem,
         testcases: res.data.testcases || [],

@@ -4,6 +4,8 @@ import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { toast } from 'react-toastify';
 
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
 const Register = () => {
   const [formData, setFormData] = useState({
     username: "",
@@ -23,7 +25,7 @@ const Register = () => {
     setErrorMsg("");
 
     try {
-      const { data } = await axios.post("http://localhost:5001/api/auth/register", formData);
+      const { data } = await axios.post(`${backendUrl}/api/auth/register`, formData);
 
       toast.success('Registration successful! Please login.');
       setTimeout(() => navigate("/login"), 1500); // Redirect to login page

@@ -4,6 +4,8 @@ import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { toast } from 'react-toastify';
 
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -19,7 +21,7 @@ const Login = () => {
       console.log("Email:", email);
       console.log("Password:", password);
       console.log("Remember Me:", rememberMe);
-      const { data } = await axios.post("http://localhost:5001/api/auth/login", {
+      const { data } = await axios.post(`${backendUrl}/api/auth/login`, {
         email,
         password,
       });
@@ -28,7 +30,7 @@ const Login = () => {
       localStorage.setItem("user", JSON.stringify(data.user));
 
       toast.success('Login successful!');
-      setTimeout(() => navigate("/problems"), 1500); // Give user time to see the toast
+      setTimeout(() => navigate("/problems"), 1500);
     } catch (err) {
       setErrorMsg(err.response?.data?.message || "Login failed");
     }
