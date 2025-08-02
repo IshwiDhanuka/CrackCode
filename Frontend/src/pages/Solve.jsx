@@ -30,6 +30,7 @@ const Solve = () => {
   const navigate = useNavigate();
   const editorRef = useRef(null);
   const [problem, setProblem] = useState(null);
+  const [isRunning, setIsRunning] = useState(false);
   const [testcases, setTestcases] = useState([]);
   const [code, setCode] = useState(languageOptions[0].boilerplate);
   const [input, setInput] = useState('');
