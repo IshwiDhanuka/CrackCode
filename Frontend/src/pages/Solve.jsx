@@ -27,6 +27,7 @@ const compilerUrl = import.meta.env.VITE_COMPILER_URL;
 const Solve = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const editorRef = useRef(null);
   const [problem, setProblem] = useState(null);
   const [testcases, setTestcases] = useState([]);
   const [code, setCode] = useState(languageOptions[0].boilerplate);
@@ -122,7 +123,7 @@ const handleRun = async () => {
     setIsRunning(false);
   }
 };
-
+c
 
 
   const handleSubmit = async () => {
