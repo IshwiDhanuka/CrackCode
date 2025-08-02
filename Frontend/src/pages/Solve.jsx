@@ -99,40 +99,31 @@ const Solve = () => {
     if (problem?._id) fetchSubmissions();
   }, [problem?._id]);
 
-  const handleRun = async () => {
-    setLoading(true);
-    setOutput('');
-    setSubmitResults(null);
-    setSubmitVerdict(null);
-    try {
-      const sampleCases = testcases.filter(tc => tc.isSample);
-      const res = await fetch(`${compilerUrl}/run`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          language,
-          code,
-          testcases: sampleCases,
-          functionName: problem?.functionName,
-          className: problem?.className,
-          arguments: problem?.arguments,
-          returnType: problem?.returnType
-        })
-      });
-      const data = await res.json();
-      if (data.success && Array.isArray(data.results)) {
-        setSubmitResults(data.results);
-        setSubmitVerdict(data.results.every(tc => tc.passed) ? 'Accepted' : 'Failed');
-      } else {
-        setSubmitResults(null);
-        setSubmitVerdict('Error');
-      }
-    } catch (err) {
-      setSubmitResults(null);
-      setSubmitVerdict('Error');
-    }
-    setLoading(false);
-  };
+const handleRun = async () => {
+  if (!editorRef.current) return;
+
+  setIsRunning(true);
+  setOutput("");
+  setShowOutput(true);
+
+  try {
+    const response = await axios.post(import.meta.env.VITE_COMPILER_URL, {
+      language: selectedLanguage,
+      code: editorRef.current.getValue(),
+      input: inputValue,
+    });
+
+    const { output } = response.data;
+    setOutput(output);
+  } catch (error) {
+    console.error("Error running code:", error);
+    setOutput("Error running code.");
+  } finally {
+    setIsRunning(false);
+  }
+};
+
+
 
   const handleSubmit = async () => {
     setSubmitLoading(true);
