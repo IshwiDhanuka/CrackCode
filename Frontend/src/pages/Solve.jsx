@@ -38,6 +38,8 @@ const Solve = () => {
   const [language, setLanguage] = useState(languageOptions[0].value);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [showOutput, setShowOutput] = useState(false);
+
   const [submitResults, setSubmitResults] = useState(null);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [submitVerdict, setSubmitVerdict] = useState(null);
