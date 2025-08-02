@@ -110,7 +110,7 @@ const handleRun = async () => {
   try {
     const response = await axios.post(import.meta.env.VITE_COMPILER_URL, {
       language: selectedLanguage,
-      code: editorRef.current.getValue(),
+      code: editorRef.current.value,
       input: inputValue,
     });
 
@@ -304,6 +304,7 @@ c
             <div className="mb-2">
               <label className="text-cyan-400 text-xs font-bold mr-2">Code Editor:</label>
               <textarea
+               ref={editorRef}
                 className="w-full h-64 bg-[#181d29] text-cyan-200 font-mono rounded-lg p-4 border border-[#232b3a] focus:outline-none focus:ring-2 focus:ring-cyan-400 resize-none text-sm"
                 value={code}
                 onChange={e => setCode(e.target.value)}
