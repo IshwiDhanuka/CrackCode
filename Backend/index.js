@@ -1,5 +1,7 @@
 const express = require('express');
 const cors = require("cors");
+const axios = require('axios'); 
+
 const adminRoutes = require('./Routes/admin');
 const authRoutes = require('./Routes/auth');
 const problemsRoutes = require('./Routes/problems');
@@ -20,16 +22,27 @@ app.use((req, res, next) => {
 
 app.use(cors());
 
-
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Mounting routes
 app.use('/admin', adminRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/problems', problemsRoutes);
 app.use('/api/user', profileRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/submissions', submissionsRoutes);
+
+// Compiler Proxy Route
+app.post('/proxy-run', async (req, res) => {
+  try {
+    const response = await axios.post('http://13.203.198.42:8000/run', req.body);
+    res.json(response.data);
+  } catch (err) {
+    console.error("Compiler proxy error:", err.message);
+    res.status(500).json({ error: "Compiler server error" });
+  }
+});
 
 DBConnection();
 
@@ -50,11 +63,11 @@ const server = app.listen(PORT, () => {
 const { Server } = require('socket.io');
 const io = new Server(server, {
   cors: {
-    origin : "https://crack-code-xi.vercel.app",
+    origin: "https://crack-code-xi.vercel.app", 
     methods: ["GET", "POST"]
   }
 });
 
-app.set('io', io); // Make io available to routes
+app.set('io', io); 
 
 module.exports = app;
