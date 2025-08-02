@@ -39,6 +39,7 @@ const Solve = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
   const [loading, setLoading] = useState(false);
   const [showOutput, setShowOutput] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState("cpp"); 
 
   const [submitResults, setSubmitResults] = useState(null);
   const [submitLoading, setSubmitLoading] = useState(false);
