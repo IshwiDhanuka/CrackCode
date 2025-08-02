@@ -35,6 +35,7 @@ const Solve = () => {
   const [code, setCode] = useState(languageOptions[0].boilerplate);
   const [input, setInput] = useState('');
   const [output, setOutput] = useState('');
+
   const [language, setLanguage] = useState(languageOptions[0].value);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -116,7 +117,7 @@ const handleRun = async () => {
     const response = await axios.post(import.meta.env.VITE_COMPILER_URL, {
       language: selectedLanguage,
       code: editorRef.current.value,
-      input: inputValue,
+
     });
 
     const { output } = response.data;
