@@ -113,6 +113,7 @@ const handleRun = async () => {
     const response = await axios.post(`${backendUrl}/proxy-run`, {
       language,
       code,
+      slug
     });
     const { output } = response.data;
     setOutput(output);
