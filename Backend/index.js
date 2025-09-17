@@ -46,7 +46,7 @@ app.post('/proxy-run', async (req, res) => {
     const response = await axios.post(`${process.env.COMPILER_URL}/run`, req.body);
     res.json(response.data);
   } catch (err) {
-    console.error("Compiler proxy error:", err.message);
+    console.error("Compiler proxy error:", err);
     res.status(500).json({ error: "Compiler server error" });
   }
 });
