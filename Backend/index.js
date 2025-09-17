@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require("cors");
 const axios = require('axios'); 
 const Problems = require('./Models/Problems');
+const Testcase = require('./Models/Testcase');
 
 const adminRoutes = require('./Routes/admin');
 const authRoutes = require('./Routes/auth');
@@ -71,8 +72,8 @@ const server = app.listen(PORT, () => {
 
 // --- SOCKET.IO SETUP ---
 const { Server } = require('socket.io');
-const Problems = require('./Models/Problems');
-const Testcase = require('./Models/Testcase');
+
+
 const io = new Server(server, {
   cors: {
     origin: [
