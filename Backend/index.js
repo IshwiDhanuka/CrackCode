@@ -36,7 +36,7 @@ app.use('/api/submissions', submissionsRoutes);
 // Compiler Proxy Route
 app.post('/proxy-run', async (req, res) => {
   try {
-    const response = await axios.post('http://13.203.198.42:8000/run', req.body);
+    const response = await axios.post('https://13.203.198.42:8000/run', req.body);
     res.json(response.data);
   } catch (err) {
     console.error("Compiler proxy error:", err.message);

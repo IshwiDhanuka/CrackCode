@@ -26,6 +26,7 @@ const Problems = () => {
   const [search, setSearch] = useState('');
   const [selectedTopic, setSelectedTopic] = useState('All Topics');
   const navigate = useNavigate();
+  const socket = io(backendUrl); 
 
   // Fetch problems from backend
   const fetchProblems = async () => {
