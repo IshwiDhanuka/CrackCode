@@ -45,9 +45,9 @@ app.use('/api/submissions', submissionsRoutes);
 // Compiler Proxy Route
 app.post('/proxy-run', async (req, res) => {
   try {
-    const problem = await Problems.findOne({slug:req.body.slug})
-    const testcases = await Testcase.find({problemId:problem.id})
-    const response = await axios.post(`${process.env.COMPILER_URL}/run`, {...req.body, ...problem, testcases});
+    const problem = await Problems.findOne({slug:req.body.slug});
+    const testcases = (await Testcase.find({problemId:problem.id})).toJSON();
+    const response = await axios.post(`${process.env.COMPILER_URL}/run`, {...req.body, ...problem.toJSON(), testcases});
     res.json(response.data);
   } catch (err) {
     console.error("Compiler proxy error:", err);
