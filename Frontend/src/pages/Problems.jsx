@@ -26,7 +26,7 @@ const Problems = () => {
   const [search, setSearch] = useState('');
   const [selectedTopic, setSelectedTopic] = useState('All Topics');
   const navigate = useNavigate();
-  const socket = io(backendUrl); 
+
 
   // Fetch problems from backend
   const fetchProblems = async () => {
@@ -42,14 +42,22 @@ const Problems = () => {
   useEffect(() => {
     fetchProblems();
     // WebSocket connection
-    const socket = io(backendUrl);
-    socket.on('problemAdded', () => {
-      fetchProblems();
-    });
-    return () => {
-      socket.disconnect();
-    };
-  }, []);
+    const socket = io(backendUrl, {
+    transports: ["websocket", "polling"]
+  });
+
+  socket.on('connect', () => {
+    console.log("Connected to socket.io server");
+  });
+
+  socket.on('problemAdded', () => {
+    fetchProblems();
+  });
+
+  return () => {
+    socket.disconnect();
+  };
+}, []);
 
   // Filter problems by search and topic
   const filteredProblems = problems.filter(p => {
