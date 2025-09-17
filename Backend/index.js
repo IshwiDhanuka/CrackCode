@@ -36,7 +36,7 @@ app.use('/api/submissions', submissionsRoutes);
 // Compiler Proxy Route
 app.post('/proxy-run', async (req, res) => {
   try {
-    const response = await axios.post('https://13.203.198.42:8000/run', req.body);
+    const response = await axios.post(`${process.env.COMPILER_URL}/run`, req.body);
     res.json(response.data);
   } catch (err) {
     console.error("Compiler proxy error:", err.message);
@@ -63,7 +63,10 @@ const server = app.listen(PORT, () => {
 const { Server } = require('socket.io');
 const io = new Server(server, {
   cors: {
-    origin: "https://crack-code-xi.vercel.app", 
+    origin: [
+      "https://www.crackcode-judge.online",
+      "http://localhost:5173"               
+    ],
     methods: ["GET", "POST"]
   }
 });

@@ -1,7 +1,6 @@
 import Layout from '../components/Layout/layout';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { useRef } from 'react'; 
 import axios from 'axios';
 import React from 'react';
 import { Zap } from 'lucide-react';
@@ -23,12 +22,12 @@ const getDifficultyColor = (difficulty) => {
 };
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
-const compilerUrl = import.meta.env.VITE_COMPILER_URL;
+
 
 const Solve = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
-  const editorRef = useRef(null);
+
   const [problem, setProblem] = useState(null);
   const [isRunning, setIsRunning] = useState(false);
   const [testcases, setTestcases] = useState([]);
@@ -38,9 +37,8 @@ const Solve = () => {
 
   const [language, setLanguage] = useState(languageOptions[0].value);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
-  const [loading, setLoading] = useState(false);
   const [showOutput, setShowOutput] = useState(false);
-  const [selectedLanguage, setSelectedLanguage] = useState("cpp"); 
+
 
   const [submitResults, setSubmitResults] = useState(null);
   const [submitLoading, setSubmitLoading] = useState(false);
@@ -107,19 +105,15 @@ const Solve = () => {
   }, [problem?._id]);
 
 const handleRun = async () => {
-  if (!editorRef.current) return;
-
   setIsRunning(true);
   setOutput("");
   setShowOutput(true);
 
   try {
-    const response = await axios.post(import.meta.env.VITE_COMPILER_URL, {
-      language: selectedLanguage,
-      code: editorRef.current.value,
-
+    const response = await axios.post(`${backendUrl}/proxy-run`, {
+      language,
+      code,
     });
-
     const { output } = response.data;
     setOutput(output);
   } catch (error) {
@@ -132,13 +126,14 @@ const handleRun = async () => {
 
 
 
+
   const handleSubmit = async () => {
     setSubmitLoading(true);
     setSubmitResults(null);
     setSubmitVerdict(null);
     try {
       const startTime = Date.now();
-      const res = await fetch(`${compilerUrl}/run`, {
+      const res = await fetch(`${backendUrl}/proxy-run`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -195,31 +190,31 @@ const handleRun = async () => {
     setSubmitLoading(false);
   };
 
-  // AI Review
-  const getReview = async () => {
-    setAILoading(true);
-    setAIReview('');
-    try {
-      const res = await axios.post('/api/ai/review', { code, problem: problem?.description || '' });
-      setAIReview(res.data.review);
-    } catch (err) {
-      setAIReview('AI review failed.');
-    }
-    setAILoading(false);
-  };
+ // AI Review
+const getReview = async () => {
+  setAILoading(true);
+  setAIReview('');
+  try {
+    const res = await axios.post(`${backendUrl}/api/ai/review`, { code, problem: problem?.description || '' });
+    setAIReview(res.data.review);
+  } catch (err) {
+    setAIReview('AI review failed.');
+  }
+  setAILoading(false);
+};
 
-  // AI Hint
-  const getHint = async () => {
-    setAILoading(true);
-    setAIHint('');
-    try {
-      const res = await axios.post('/api/ai/hint', { problem: problem?.description || '' });
-      setAIHint(res.data.hint);
-    } catch (err) {
-      setAIHint('AI hint failed.');
-    }
-    setAILoading(false);
-  };
+// AI Hint
+const getHint = async () => {
+  setAILoading(true);
+  setAIHint('');
+  try {
+    const res = await axios.post(`${backendUrl}/api/ai/hint`, { problem: problem?.description || '' });
+    setAIHint(res.data.hint);
+  } catch (err) {
+    setAIHint('AI hint failed.');
+  }
+  setAILoading(false);
+};
 
   const sampleTestcases = testcases.filter(tc => tc.isSample);
   const hiddenTestcases = testcases.filter(tc => !tc.isSample);
@@ -310,7 +305,6 @@ const handleRun = async () => {
             <div className="mb-2">
               <label className="text-cyan-400 text-xs font-bold mr-2">Code Editor:</label>
               <textarea
-               ref={editorRef}
                 className="w-full h-64 bg-[#181d29] text-cyan-200 font-mono rounded-lg p-4 border border-[#232b3a] focus:outline-none focus:ring-2 focus:ring-cyan-400 resize-none text-sm"
                 value={code}
                 onChange={e => setCode(e.target.value)}
@@ -321,7 +315,7 @@ const handleRun = async () => {
               <button
                 className="bg-cyan-400 hover:bg-cyan-300 text-black font-semibold px-6 py-2 rounded-md shadow transition text-xs"
                 onClick={handleRun}
-                disabled={loading}
+                disabled={isRunning}
               >
                 {loading ? 'Running...' : 'Run'}
               </button>
