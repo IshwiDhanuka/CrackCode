@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require("cors");
 const axios = require('axios'); 
+const Problems = require('./Models/Problems');
 
 const adminRoutes = require('./Routes/admin');
 const authRoutes = require('./Routes/auth');
@@ -43,7 +44,9 @@ app.use('/api/submissions', submissionsRoutes);
 // Compiler Proxy Route
 app.post('/proxy-run', async (req, res) => {
   try {
-    const response = await axios.post(`${process.env.COMPILER_URL}/run`, req.body);
+    const problem = await Problems.findOne({slug:req.body.slug})
+    const testcases = await Testcase.find({problemId:problem.id})
+    const response = await axios.post(`${process.env.COMPILER_URL}/run`, {...req.body, ...problem, testcases});
     res.json(response.data);
   } catch (err) {
     console.error("Compiler proxy error:", err);
@@ -68,6 +71,8 @@ const server = app.listen(PORT, () => {
 
 // --- SOCKET.IO SETUP ---
 const { Server } = require('socket.io');
+const Problems = require('./Models/Problems');
+const Testcase = require('./Models/Testcase');
 const io = new Server(server, {
   cors: {
     origin: [
