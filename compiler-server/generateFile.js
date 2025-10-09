@@ -139,7 +139,7 @@ const generateFile = async (format, content, options = {}) => {
 #include <sstream>
 #include <cmath>
 #include <algorithm>
-#include <limits>
+#include <climits>
 using namespace std;
 
 ${content}
