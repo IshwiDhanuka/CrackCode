@@ -18,3 +18,4 @@
 #include <cctype>
 #include <ctime>
 #include <sstream>
+#include <climits>
