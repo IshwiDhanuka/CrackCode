@@ -26,7 +26,8 @@ app.use(cors({
     origin: [
       "https://www.crackcode-judge.online",
       "https://crackcode-judge.online",
-      "http://localhost:5173"
+      "http://localhost:5173",
+      "https://crack-code-xi.vercel.app"
     ],
     methods: ["GET", "POST", "PUT", "DELETE"]
   }));
@@ -79,7 +80,7 @@ const io = new Server(server, {
     origin: [
       "https://www.crackcode-judge.online",
       "https://crackcode-judge.online",
-      "http://localhost:5173"
+      "http://localhost:5173",
       "https://crack-code-xi.vercel.app"
     ],
     methods: ["GET", "POST"]
