@@ -80,6 +80,7 @@ const io = new Server(server, {
       "https://www.crackcode-judge.online",
       "https://crackcode-judge.online",
       "http://localhost:5173"
+      "https://crack-code-xi.vercel.app"
     ],
     methods: ["GET", "POST"]
   }
