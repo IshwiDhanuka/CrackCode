@@ -1,23 +1,32 @@
 const express = require('express');
 const util = require('util');
+const cors = require('cors');
+
 const app = express();
 const { generateFile } = require('./generateFile');
 const { generateInputFile } = require('./generateInputFile');
 const { executeCpp } = require('./executeCpp');
-const cors = require('cors');
 
 app.use(cors());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
+// Health check
 app.get("/", (req, res) => {
     res.json({ online: 'compiler' });
 });
 
-
 app.post("/run", async (req, res) => {
-    const { language = 'cpp', code, input = '', testcases, functionName, className, arguments: args } = req.body;
+    const { 
+        language = 'cpp', 
+        code, 
+        testcases, 
+        functionName, 
+        className, 
+        arguments: args 
+    } = req.body;
 
+    // 1. Basic Validation
     if (!code || code.trim() === '') {
         return res.status(400).json({
             success: false,
@@ -25,97 +34,55 @@ app.post("/run", async (req, res) => {
         });
     }
 
-    // Batch test case mode
-    if (Array.isArray(testcases) && testcases.length > 0) {
-        try {
-            const results = [];
-            for (const tc of testcases) {
-                const filePath = await generateFile(language, code, { functionName, className, arguments: args });
-                const inputPath = await generateInputFile(tc.input || '');
-                try {
-                    const output = await executeCpp(filePath, inputPath);
-                    const cleanedOutput = (output || '').trim();
-                    const cleanedExpected = (tc.expectedOutput || '').trim();
-                    results.push({
-                        input: tc.input,
-                        expectedOutput: tc.expectedOutput,
-                        output: cleanedOutput,
-                        passed: cleanedOutput === cleanedExpected
-                    });
-                } catch (err) {
-                    results.push({
-                        input: tc.input,
-                        expectedOutput: tc.expectedOutput,
-                        output: err.error || String(err),
-                        passed: false,
-                        error: true
-                    });
-                }
-            }
-            return res.json({ success: true, results });
-        } catch (error) {
-            return res.status(500).json({ success: false, error: String(error) });
-        }
-    }
-
-    // Single input mode (default)
     try {
-        const filePath = await generateFile(language, code, { functionName, className, arguments: args });
-        const inputPath = await generateInputFile(input);
-        const output = await executeCpp(filePath, inputPath);
-        return res.json({
+        const results = [];
+
+         // A. Generate the .cpp file with the hidden 'main' driver
+            const filePath = await generateFile(language, code, {
+                functionName,
+                className
+            });
+
+
+        // 2. Loop through each test case
+        for (const tc of testcases) {
+           
+            // B. Create a physical .txt file from the 'Clean' database input
+            // tc.input should now be "4 3 6 7 11 8"
+            const inputPath = await generateInputFile(tc.input || '');
+
+            // C. Execute: This now uses '<' to pipe the .txt file into the binary
+            const output = await executeCpp(filePath, inputPath);
+
+            // D. Compare result and push to array
+            results.push({
+                input: tc.input,
+                output: output.trim(),
+                expected: tc.expectedOutput,
+                passed: output.trim() === tc.expectedOutput.trim()
+            });
+        }
+
+        // 3. Return the batch results
+        res.json({
             success: true,
-            output
+            results
         });
+
     } catch (error) {
-        console.error(' Error executing code:', error);
-
-        console.error('Error type:', typeof error);
-        console.error('Error keys:', Object.keys(error || {}));
-        console.error('Error JSON:', JSON.stringify(error, null, 2));
-
-        function safeStringify(obj) {
-            const seen = new WeakSet();
-            return JSON.stringify(obj, (key, value) => {
-                if (typeof value === "object" && value !== null) {
-                    if (seen.has(value)) {
-                        return "[Circular]";
-                    }
-                    seen.add(value);
-                }
-                return value;
-            }, 2);
-        }
-
-        let actualError;
-
-        if (typeof error === 'string') {
-            actualError = error;
-        } else if (error instanceof Error) {
-            actualError = error.message;
-            if (error.stderr) {
-                actualError += `\nCompiler stderr: ${error.stderr}`;
-            }
-        } else if (error?.error) {
-            if (typeof error.error === 'string') {
-                actualError = error.error;
-            } else {
-                actualError = safeStringify(error.error);
-            }
-        } else if (typeof error === 'object') {
-            actualError = util.inspect(error, { depth: 5, colors: false });
-        } else {
-            actualError = safeStringify(error);
-        }
-
-        return res.status(500).json({
+        console.error('Execution Error:', error);
+        console.log("FULL EXECUTION ERROR:", error);
+        
+        // Handle compilation vs runtime errors specifically
+        res.status(500).json({
             success: false,
-            error: actualError
+            error: error.error || "Execution failed",
+            type: error.type || "Unknown Error"
         });
     }
 });
 
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => {
-    console.log(` Compiler server is listening on port ${PORT}`);
+    console.log(`Compiler server is listening on port ${PORT}`);
 });

@@ -14,7 +14,6 @@
 #include <cstdlib>
 #include <cstring>
 #include <cassert>
-#include <climits>
 #include <cctype>
 #include <ctime>
 #include <sstream>

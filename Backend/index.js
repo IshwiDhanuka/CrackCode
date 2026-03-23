@@ -1,3 +1,4 @@
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 const express = require('express');
 const cors = require("cors");
 const axios = require('axios'); 
@@ -43,18 +44,49 @@ app.use('/api/user', profileRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/submissions', submissionsRoutes);
 
-// Compiler Proxy Route
+// Updated Compiler Proxy Route
 app.post('/proxy-run', async (req, res) => {
   try {
-    const problem = await Problems.findOne({slug:req.body.slug});
-    const testcases = await Testcase.find({problemId:problem.id});
-    const response = await axios.post(`${process.env.COMPILER_URL}/run`, {...req.body, ...problem._doc , testcases});
+    const { slug, code, language } = req.body;
+
+    if (!slug) {
+      return res.status(400).json({ error: "Missing 'slug' in request body" });
+    }
+
+    const problem = await Problems.findOne({ slug });
+    if (!problem) {
+      return res.status(404).json({ error: `Problem with slug '${slug}' not found` });
+    }
+
+    const testcases = await Testcase.find({ problemId: problem._id });
+
+    const argArray = problem.arguments 
+      ? problem.arguments.split(',').map(arg => arg.trim()) 
+      : [];
+
+  const response = await axios.post(
+    `${process.env.COMPILER_URL}/run`,
+    { 
+        code: req.body.code,
+        language: req.body.language || 'cpp',
+        className: problem.className,
+        functionName: problem.functionName,
+        testcases: testcases 
+        // NOTICE: We are NOT sending 'arguments' or 'returnType' at all!
+    }
+);
+
     res.json(response.data);
+
   } catch (err) {
-    console.error("Compiler proxy error:", err);
-    res.status(500).json({ error: "Compiler server error" });
+    console.error("Compiler proxy error:", err.message);
+    res.status(500).json({ 
+      error: "Compiler server error", 
+      message: err.response?.data?.error || err.message 
+    });
   }
 });
+
 
 DBConnection();
 

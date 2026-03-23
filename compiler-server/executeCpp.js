@@ -1,48 +1,52 @@
 const { exec } = require("child_process");
 const fs = require("fs");
 const path = require("path");
-const os = require("os");
 
+// Ensure the temp directory exists for the compiled binaries
 const outputPath = path.join(__dirname, "temp");
 if (!fs.existsSync(outputPath)) {
-  fs.mkdirSync(outputPath, { recursive: true });
+    fs.mkdirSync(outputPath, { recursive: true });
 }
 
 const executeCpp = (filePath, inputPath) => {
-  const jobId = path.basename(filePath).split(".")[0];
-  const isWindows = os.platform() === "win32";
+    const jobId = path.basename(filePath).split(".")[0];
+    const exePath = path.join(outputPath, `${jobId}.out`);
 
-  const exePath = path.join(outputPath, isWindows ? `${jobId}.exe` : `${jobId}.out`);
+    return new Promise((resolve, reject) => {
+        // Step 1: Compile the code
+        const compileCommand = `g++ -std=c++20 "${filePath}" -o "${exePath}"`;
+        
+        exec(compileCommand, (error, stdout, stderr) => {
+            if (error) {
+                return reject({ error: stderr || error.message, type: "Compilation Error" });
+            }
 
-  const runCommand = `"${exePath}" < "${inputPath}"`;
+            // Step 2: Run the binary
+            // FIX: Removed the "./" because exePath is already an absolute path.
+            // Added chmod +x just in case to ensure the binary is executable.
+            const runCommand = `chmod +x "${exePath}" && "${exePath}" < "${inputPath}"`;
+            
+            exec(runCommand, { timeout: 5000 }, (runError, runStdout, runStderr) => {
+                // Cleanup binary after running to save space in the container
+                if (fs.existsSync(exePath)) {
+                    try {
+                        fs.unlinkSync(exePath);
+                    } catch (cleanupErr) {
+                        console.error("Cleanup error:", cleanupErr);
+                    }
+                }
 
-  return new Promise((resolve, reject) => {
-    const compileCommand = `g++ -std=c++20 -I ${path.join(__dirname, 'include')} "${filePath}" -o "${exePath}" && ${runCommand}`;
-    console.log("🔧 Running command:", compileCommand);
-
-    exec(compileCommand, { shell: true, timeout: 2000 }, (error, stdout, stderr) => {
-      console.log(" stdout:", stdout);
-      console.log("stderr:", stderr);
-      console.log(" error:", error);
-
-      try {
-       fs.unlinkSync(filePath);
-        fs.unlinkSync(inputPath);
-        if (fs.existsSync(exePath)) fs.unlinkSync(exePath);
-      } catch (cleanupErr) {
-        console.warn(" Cleanup warning:", cleanupErr.message);
-      }
-
-      if (error) {
-        if (error.killed || error.signal === 'SIGTERM' || error.code === 'ETIMEDOUT') {
-          return reject({ error: 'Time Limit Exceeded' });
-        }
-        return reject({ error: stderr || error.message });
-      }
-      if (stderr) return reject({ error: stderr });
-      return resolve(stdout);
+                if (runError) {
+                    if (runError.killed) {
+                        return reject({ error: "Time Limit Exceeded (5s)", type: "Runtime Error" });
+                    }
+                    return reject({ error: runStderr || runError.message, type: "Runtime Error" });
+                }
+                
+                resolve(runStdout);
+            });
+        });
     });
-  });
 };
 
 module.exports = { executeCpp };

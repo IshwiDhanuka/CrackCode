@@ -104,19 +104,26 @@ const Solve = () => {
     if (problem?._id) fetchSubmissions();
   }, [problem?._id]);
 
+  
 const handleRun = async () => {
   setIsRunning(true);
   setOutput("");
   setShowOutput(true);
 
   try {
+    // Extract slug from current URL
+    const slugFromURL = window.location.pathname.split("/").pop();
+
+    // Send slug along with language and code
     const response = await axios.post(`${backendUrl}/proxy-run`, {
       language,
       code,
-      slug
+      slug: slugFromURL
     });
+
     const { output } = response.data;
     setOutput(output);
+
   } catch (error) {
     console.error("Error running code:", error);
     setOutput("Error running code.");
@@ -124,7 +131,6 @@ const handleRun = async () => {
     setIsRunning(false);
   }
 };
-
 
 
 
