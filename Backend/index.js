@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require("cors");
 const axios = require('axios'); 
 
+
 const Problems = require('./Models/Problems');
 const Testcase = require('./Models/Testcase');
 const adminRoutes = require('./Routes/admin');
@@ -46,34 +47,57 @@ app.use('/api/submissions', submissionsRoutes);
 app.post('/run', async (req, res) => {
   try {
     const { slug, code, language } = req.body;
+    
+    // 1. Log the URL to verify .env is actually loading
+    console.log(`[RUN] Connecting to: ${process.env.COMPILER_URL}/run`);
 
     if (!slug) return res.status(400).json({ error: "Missing 'slug'" });
 
     const problem = await Problems.findOne({ slug });
-    if (!problem) return res.status(404).json({ error: "Problem not found" });
+    if (!problem) {
+      return res.status(404).json({ error: "Problem not found" });
+    }
 
     const testcases = await Testcase.find({ problemId: problem._id });
+    console.log(`Sending ${testcases.length} test cases to Compiler...`);
 
-    // Send everything the compiler needs to reconstruct the class/function
+    // 2. The Axios Request
     const response = await axios.post(`${process.env.COMPILER_URL}/run`, { 
         code,
         language: language || 'cpp',
         className: problem.className || 'Solution',
         functionName: problem.functionName,
         testcases,
-        // Pro-tip: Send these just in case your compiler needs them later
         arguments: problem.arguments,
         returnType: problem.returnType
-    });
+    }, { 
+        timeout: 45000, // Bumped to 45s - AWS cold starts + TLE logic need time
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept-Encoding': 'identity' // Prevents issues with gzipped responses
+        }
+    }); 
 
+    console.log("✅ Compiler responded successfully");
     res.json(response.data);
 
   } catch (err) {
-    console.error("Compiler proxy error:", err.message);
-    res.status(500).json({ error: "Compiler server error" });
+    console.error("❌ COMPILER PROXY ERROR:");
+
+    if (err.code === 'ECONNABORTED') {
+       console.error("TIMEOUT: AWS took > 45 seconds.");
+       return res.status(504).json({ error: "Compiler Timeout" });
+    }
+
+    if (err.response) {
+      console.error("Status:", err.response.status);
+      res.status(err.response.status).json(err.response.data);
+    } else {
+      console.error("Error Message:", err.message);
+      res.status(503).json({ error: "Compiler unreachable", details: err.message });
+    }
   }
 });
-
 DBConnection();
 
 app.get("/", (req, res) => {
