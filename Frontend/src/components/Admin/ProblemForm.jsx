@@ -209,6 +209,20 @@ export default function ProblemForm({ problem, onClose, onSaved }) {
 
         <textarea name="description" value={form.description} onChange={handleChange} placeholder="Problem Description..." className="w-full mb-4 px-3 py-2 rounded bg-[#1c212c] border border-gray-700 text-white min-h-[100px]" rows={4} required />
 
+        {/* Constraints Section */}
+<div className="flex flex-col gap-1 mb-6">
+  <label className="text-xs font-bold text-cyan-500 uppercase tracking-wider">Constraints</label>
+  <textarea 
+    name="constraints" 
+    value={form.constraints} 
+    onChange={handleChange} 
+    placeholder="e.g. 1 <= nums.length <= 10^4" 
+    className="w-full px-3 py-2 rounded bg-[#1c212c] border border-gray-700 text-white focus:border-cyan-500 outline-none min-h-[80px]" 
+    rows={3}
+    required 
+  />
+</div>
+
         {/* Examples */}
         <div className="mb-6 p-4 border border-gray-800 rounded-lg">
           <h3 className="text-cyan-400 font-bold mb-3 flex items-center gap-2">Example UI Displays</h3>
