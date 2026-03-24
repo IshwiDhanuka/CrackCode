@@ -79,17 +79,32 @@ export default function ProblemForm({ problem, onClose, onSaved }) {
       return;
     }
     
-    // Create the raw input string for the runner (values only, newline separated)
-    const rawInput = tcVars.map(v => v.value).join('\n');
+    const formattedInputs = tcVars.map(v => {
+      const val = v.value.trim();
+      if (val.startsWith('[') && val.endsWith(']')) {
+        try {
+          const cleanedVal = val.replace(/'/g, '"');
+          const parsedArray = JSON.parse(cleanedVal);
+          if (Array.isArray(parsedArray)) {
+            return `${parsedArray.length} ${parsedArray.join(' ')}`;
+          }
+        } catch (e) {
+          return val;
+        }
+      }
+      return val; 
+    });
+
+    const rawInput = formattedInputs.join('\n');
     
     setForm({
       ...form,
       testcases: [
         ...form.testcases, 
         { 
-          inputs: tcVars.map(v => ({ ...v })), // Store for UI/Editing
-          input: rawInput,                     // Store for Backend Execution
-          expectedOutput: tcOutput, 
+          inputs: tcVars.map(v => ({ ...v })), 
+          input: rawInput,                     
+          expectedOutput: tcOutput.trim(), 
           isSample: tcType === 'Sample' 
         }
       ]
@@ -110,7 +125,6 @@ export default function ProblemForm({ problem, onClose, onSaved }) {
     e.preventDefault();
     setSaving(true);
     try {
-      
       const token = localStorage.getItem('token'); 
       const config = { 
         headers: { 
@@ -123,7 +137,6 @@ export default function ProblemForm({ problem, onClose, onSaved }) {
         ...form,
         tags: form.tags ? form.tags.split(',').map(t => t.trim()) : [],
         examples: examples,
-        
         testcases: form.testcases.map(tc => ({
           input: tc.input,
           expectedOutput: tc.expectedOutput,
@@ -136,14 +149,10 @@ export default function ProblemForm({ problem, onClose, onSaved }) {
         returnType: form.returnType.trim()
       };
 
-      console.log("Sending Payload:", payload); 
-
-      let res;
       if (isEdit) {
-        res = await axios.put(`${backendUrl}/api/problems/${problem.slug}`, payload, config);
+        await axios.put(`${backendUrl}/api/problems/${problem.slug}`, payload, config);
       } else {
-        
-        res = await axios.post(`${backendUrl}/api/problems`, payload, config);
+        await axios.post(`${backendUrl}/api/problems`, payload, config);
       }
 
       toast.success('Problem saved successfully!');
@@ -151,8 +160,6 @@ export default function ProblemForm({ problem, onClose, onSaved }) {
       if (onClose) onClose();
       navigate('/problems');
     } catch (err) {
-      console.error("Full Error Object:", err);
-     
       const errorMsg = err.response?.data?.message || err.message || 'Error saving problem';
       toast.error(errorMsg);
     } finally {
@@ -169,7 +176,6 @@ export default function ProblemForm({ problem, onClose, onSaved }) {
         
         <h2 className="text-2xl font-bold text-cyan-400 mb-6">{isEdit ? 'Edit Problem' : 'New Problem'}</h2>
 
-        {/* Basic Info */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div className="flex flex-col gap-1">
             <label className="text-xs font-bold text-cyan-500 uppercase">Title</label>
@@ -191,7 +197,6 @@ export default function ProblemForm({ problem, onClose, onSaved }) {
           </div>
         </div>
 
-        {/* Technical Structure */}
         <div className="bg-black/30 p-4 rounded-lg border border-cyan-900/30 mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="flex flex-col gap-1">
             <label className="text-xs font-bold text-yellow-500 uppercase">Return Type</label>
@@ -209,21 +214,11 @@ export default function ProblemForm({ problem, onClose, onSaved }) {
 
         <textarea name="description" value={form.description} onChange={handleChange} placeholder="Problem Description..." className="w-full mb-4 px-3 py-2 rounded bg-[#1c212c] border border-gray-700 text-white min-h-[100px]" rows={4} required />
 
-        {/* Constraints Section */}
-<div className="flex flex-col gap-1 mb-6">
-  <label className="text-xs font-bold text-cyan-500 uppercase tracking-wider">Constraints</label>
-  <textarea 
-    name="constraints" 
-    value={form.constraints} 
-    onChange={handleChange} 
-    placeholder="e.g. 1 <= nums.length <= 10^4" 
-    className="w-full px-3 py-2 rounded bg-[#1c212c] border border-gray-700 text-white focus:border-cyan-500 outline-none min-h-[80px]" 
-    rows={3}
-    required 
-  />
-</div>
+        <div className="flex flex-col gap-1 mb-6">
+          <label className="text-xs font-bold text-cyan-500 uppercase tracking-wider">Constraints</label>
+          <textarea name="constraints" value={form.constraints} onChange={handleChange} placeholder="e.g. 1 <= nums.length <= 10^4" className="w-full px-3 py-2 rounded bg-[#1c212c] border border-gray-700 text-white focus:border-cyan-500 outline-none min-h-[80px]" rows={3} required />
+        </div>
 
-        {/* Examples */}
         <div className="mb-6 p-4 border border-gray-800 rounded-lg">
           <h3 className="text-cyan-400 font-bold mb-3 flex items-center gap-2">Example UI Displays</h3>
           <div className="flex flex-col gap-2 mb-3">
@@ -245,14 +240,13 @@ export default function ProblemForm({ problem, onClose, onSaved }) {
           </div>
         </div>
 
-        {/* Test Cases (Actual Execution) */}
         <div className="mb-8 p-4 border border-cyan-900/50 bg-cyan-950/5 rounded-lg">
           <h3 className="text-cyan-400 font-bold mb-4 uppercase tracking-widest text-sm">Compiler Test Cases</h3>
           <div className="space-y-3 mb-4">
             {tcVars.map((v, idx) => (
               <div key={idx} className="flex gap-2">
-                <input value={v.name} onChange={e => handleTcVarChange(idx, 'name', e.target.value)} placeholder="Var Name (e.g. nums)" className="px-3 py-1 text-sm rounded bg-black border border-gray-700 text-cyan-300 w-1/3" />
-                <input value={v.value} onChange={e => handleTcVarChange(idx, 'value', e.target.value)} placeholder="Value (e.g. [2,7,11])" className="px-3 py-1 text-sm rounded bg-black border border-gray-700 text-white flex-1" />
+                <input value={v.name} onChange={e => handleTcVarChange(idx, 'name', e.target.value)} placeholder="Var Name" className="px-3 py-1 text-sm rounded bg-black border border-gray-700 text-cyan-300 w-1/3" />
+                <input value={v.value} onChange={e => handleTcVarChange(idx, 'value', e.target.value)} placeholder="Value" className="px-3 py-1 text-sm rounded bg-black border border-gray-700 text-white flex-1" />
                 {tcVars.length > 1 && <button type="button" onClick={() => removeTcVar(idx)} className="text-red-500">×</button>}
               </div>
             ))}
@@ -261,11 +255,7 @@ export default function ProblemForm({ problem, onClose, onSaved }) {
           
           <div className="flex flex-col md:flex-row gap-2 mb-4">
             <input value={tcOutput} onChange={e => setTcOutput(e.target.value)} placeholder="Expected Output" className="px-3 py-2 text-sm rounded bg-black border border-gray-700 text-green-400 flex-1" />
-            <select 
-              value={tcType} 
-              onChange={e => setTcType(e.target.value)} 
-              className={`px-3 py-2 text-sm rounded bg-black border font-bold ${tcType === 'Sample' ? 'border-green-600 text-green-400' : 'border-pink-600 text-pink-400'}`}
-            >
+            <select value={tcType} onChange={e => setTcType(e.target.value)} className={`px-3 py-2 text-sm rounded bg-black border font-bold ${tcType === 'Sample' ? 'border-green-600 text-green-400' : 'border-pink-600 text-pink-400'}`}>
               <option value="Sample">Sample (Public)</option>
               <option value="Hidden">Hidden (Secret)</option>
             </select>
@@ -287,11 +277,7 @@ export default function ProblemForm({ problem, onClose, onSaved }) {
           </div>
         </div>
 
-        <button 
-          type="submit" 
-          disabled={saving}
-          className={`w-full py-4 rounded-xl font-bold text-lg transition-all shadow-lg ${saving ? 'bg-gray-700 cursor-not-allowed' : 'bg-cyan-500 hover:bg-cyan-400 text-black active:scale-[0.98]'}`}
-        >
+        <button type="submit" disabled={saving} className={`w-full py-4 rounded-xl font-bold text-lg transition-all shadow-lg ${saving ? 'bg-gray-700 cursor-not-allowed' : 'bg-cyan-500 hover:bg-cyan-400 text-black active:scale-[0.98]'}`}>
           {saving ? 'Processing Request...' : (isEdit ? 'Update Problem' : 'Create Problem')}
         </button>
       </form>
