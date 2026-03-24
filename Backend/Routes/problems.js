@@ -55,6 +55,12 @@ router.post('/', adminMiddleware, async (req, res) => {
       examples, testcases, functionName, className, arguments: args, returnType 
     } = req.body;
 
+    console.log("Received constraints:", constraints);
+
+    if (!constraints || constraints.trim() === "") {
+      return res.status(400).json({ success: false, message: "Constraints are required." });
+    }
+
     // 1. Check for duplicate slug
     const exists = await Problem.findOne({ slug });
     if (exists) {
