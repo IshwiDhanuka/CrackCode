@@ -106,27 +106,46 @@ const Solve = () => {
 
   
 const handleRun = async () => {
+  if (!problem || testcases.length === 0) {
+    toast.error("Problem data not loaded yet.");
+    return;
+  }
+
   setIsRunning(true);
-  setOutput("");
+  setOutput("Compiling and running sample cases...");
   setShowOutput(true);
 
   try {
-    // Extract slug from current URL
-    const slugFromURL = window.location.pathname.split("/").pop();
-
-    // Send slug along with language and code
-    const response = await axios.post(`${backendUrl}/proxy-run`, {
+    // We only run Sample Testcases for the "Run" button to save resources
+    const sampleCases = testcases.filter(tc => tc.isSample);
+    
+    const payload = {
       language,
       code,
-      slug: slugFromURL
-    });
+      className: problem.className || 'Solution',
+      functionName: problem.functionName,
+      // Pass the formatted testcases from the database
+      testcases: sampleCases.length > 0 ? sampleCases : testcases.slice(0, 1), 
+    };
 
-    const { output } = response.data;
-    setOutput(output);
+    // Use the standard /run endpoint we debugged in the backend
+    const response = await axios.post(`${backendUrl}/run`, payload);
+
+    if (response.data.success) {
+      // We map the results to the output state to show in the console
+      const resultText = response.data.results.map((res, idx) => 
+        `Case ${idx + 1}: ${res.passed ? 'PASSED' : 'FAILED'}\nOutput: ${res.output}\nExpected: ${res.expected}`
+      ).join('\n\n');
+      
+      setOutput(resultText);
+      setSubmitResults(response.data.results); // This updates the UI tabs below the editor
+    } else {
+      setOutput(response.data.error || "Execution Error");
+    }
 
   } catch (error) {
     console.error("Error running code:", error);
-    setOutput("Error running code.");
+    setOutput(error.response?.data?.error || "Error connecting to compiler server.");
   } finally {
     setIsRunning(false);
   }
@@ -140,7 +159,7 @@ const handleRun = async () => {
     setSubmitVerdict(null);
     try {
       const startTime = Date.now();
-      const res = await fetch(`${backendUrl}/proxy-run`, {
+      const res = await fetch(`${backendUrl}/run`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -349,6 +368,29 @@ const getHint = async () => {
                 AI Hint
               </button>
             </div>
+
+            {showOutput && (
+  <div className="mt-4 animate-in fade-in duration-300">
+    <div className="flex justify-between items-center mb-2">
+      <label className="text-cyan-400 text-xs font-bold tracking-widest uppercase">
+        Terminal Output
+      </label>
+      <button 
+        onClick={() => setShowOutput(false)} 
+        className="text-gray-500 hover:text-white text-xs transition-colors"
+      >
+        [Clear]
+      </button>
+    </div>
+    <pre className="w-full min-h-[120px] max-h-[250px] bg-[#05070a] text-green-400 font-mono rounded-lg p-4 border border-cyan-900/50 overflow-auto text-xs shadow-[inset_0_0_10px_rgba(0,0,0,0.5)]">
+      {isRunning ? (
+        <span className="animate-pulse">Executing code on secure Docker container...</span>
+      ) : (
+        output || "Execution finished. No standard output returned."
+      )}
+    </pre>
+  </div>
+)}
             {aiLoading && <div className="text-cyan-300 mt-2">Loading AI response...</div>}
             {aiReview && (
               <div className="mt-4 bg-[#181d29] border-l-4 border-[#6c47ff] text-white p-4 rounded shadow">
@@ -360,6 +402,8 @@ const getHint = async () => {
                 <b>AI Hint:</b> <br />{aiHint}
               </div>
             )}
+
+
             {/* Test Cases Section */}
             
             {/* Testcase/Test Result Panel */}
