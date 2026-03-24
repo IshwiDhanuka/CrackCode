@@ -16,12 +16,8 @@ const DBConnection = async() =>{
     }
 
     try{
-         // Connect to MongoDB with recommended options
-        await mongoose.connect(MONGO_URL, {
-            useNewUrlParser : true,
-        useUnifiedTopology : true
-    });
-        console.log("Database connected successfully");
+  // Simplified connection for modern Mongoose/MongoDB Driver
+await mongoose.connect(MONGO_URL); console.log("Database connected successfully");
     }
     catch(error){
         console.error("Error while connecting to database:", error.message);

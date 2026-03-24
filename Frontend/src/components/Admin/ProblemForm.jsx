@@ -110,40 +110,51 @@ export default function ProblemForm({ problem, onClose, onSaved }) {
     e.preventDefault();
     setSaving(true);
     try {
-      const token = localStorage.getItem('token');
-      const config = { headers: { Authorization: `Bearer ${token}` } };
+      
+      const token = localStorage.getItem('token'); 
+      const config = { 
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json' 
+        } 
+      };
 
       const payload = {
         ...form,
         tags: form.tags ? form.tags.split(',').map(t => t.trim()) : [],
         examples: examples,
-        // Ensure testcases are cleaned and filtered
+        
         testcases: form.testcases.map(tc => ({
           input: tc.input,
           expectedOutput: tc.expectedOutput,
           isSample: tc.isSample,
           inputs: tc.inputs 
-        })).filter(tc => tc.input.trim() !== ''),
+        })),
         functionName: form.functionName.trim(),
         className: form.className.trim() || 'Solution',
         arguments: form.arguments.trim(),
         returnType: form.returnType.trim()
       };
 
+      console.log("Sending Payload:", payload); 
+
+      let res;
       if (isEdit) {
-        await axios.put(`${backendUrl}/api/problems/${problem.slug}`, payload, config);
-        toast.success('Problem updated!');
+        res = await axios.put(`${backendUrl}/api/problems/${problem.slug}`, payload, config);
       } else {
-        await axios.post(`${backendUrl}/api/problems/`, payload, config);
-        toast.success('Problem created!');
+        
+        res = await axios.post(`${backendUrl}/api/problems`, payload, config);
       }
 
-      onSaved && onSaved();
-      onClose && onClose();
+      toast.success('Problem saved successfully!');
+      if (onSaved) onSaved();
+      if (onClose) onClose();
       navigate('/problems');
     } catch (err) {
-      console.error(err);
-      toast.error(err.response?.data?.message || 'Error saving problem');
+      console.error("Full Error Object:", err);
+     
+      const errorMsg = err.response?.data?.message || err.message || 'Error saving problem';
+      toast.error(errorMsg);
     } finally {
       setSaving(false);
     }

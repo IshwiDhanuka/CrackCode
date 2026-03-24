@@ -46,41 +46,53 @@ router.get('/:slug', async (req, res) => {
   }
 });
 
-// Add a new problem 
+
 router.post('/', adminMiddleware, async (req, res) => {
   try {
-    const { title, slug, description, difficulty, tags, constraints, examples, testcases, functionName, className, arguments: args, returnType } = req.body;
+    // Destructure everything including the new fields we added to the frontend
+    const { 
+      title, slug, description, difficulty, tags, constraints, 
+      examples, testcases, functionName, className, arguments: args, returnType 
+    } = req.body;
 
+    // 1. Check for duplicate slug
     const exists = await Problem.findOne({ slug });
     if (exists) {
       return res.status(400).json({ success: false, message: 'Slug already exists' });
     }
 
-    const problem = await Problem.create({ title, slug, description, difficulty, tags, constraints, examples, functionName, className, arguments: args, returnType });
+    // 2. Create the main Problem document
+    // Note: We use 'arguments: args' because 'arguments' is a reserved keyword in JS
+    const problem = await Problem.create({ 
+      title, slug, description, difficulty, tags, 
+      constraints, examples, functionName, className, 
+      arguments: args, returnType 
+    });
 
-    if (Array.isArray(testcases)) {
+    // 3. Handle the Testcases array
+    if (Array.isArray(testcases) && testcases.length > 0) {
       const tcDocs = testcases.map(tc => ({
         problemId: problem._id,
-        input: tc.input,
+        input: tc.input, // This will contain the 'nums\ntarget' format
         expectedOutput: tc.expectedOutput,
         isSample: tc.isSample || false
       }));
       await Testcase.insertMany(tcDocs);
     }
 
-    // Emit websocket event for new problem
+    // 4. WebSocket Notification
     const io = req.app.get('io');
     if (io) {
       io.emit('problemAdded', { slug, title, difficulty });
     }
 
-    res.status(201).json({ success: true, message: 'Problem created', problem });
+    res.status(201).json({ success: true, message: 'Problem created successfully', problem });
   } catch (err) {
     console.error('Create problem error:', err);
-    res.status(500).json({ success: false, message: 'Server error' });
+    // Send the actual error message back so we can see it in the frontend console
+    res.status(500).json({ success: false, message: err.message });
   }
 });
-
 //  Update a problem 
 router.put('/:slug', adminMiddleware, async (req, res) => {
   try {
