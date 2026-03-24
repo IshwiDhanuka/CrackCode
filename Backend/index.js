@@ -43,7 +43,7 @@ app.use('/api/user', profileRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/submissions', submissionsRoutes);
 
-app.post('/proxy-run', async (req, res) => {
+app.post('/run', async (req, res) => {
   try {
     const { slug, code, language } = req.body;
 
