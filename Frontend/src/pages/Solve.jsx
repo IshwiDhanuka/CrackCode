@@ -115,6 +115,7 @@ const Solve = () => {
       const sampleCases = testcases.filter(tc => tc.isSample);
 
       const payload = {
+        slug,
         language,
         code,
         className: problem.className || 'Solution',
@@ -156,6 +157,7 @@ const Solve = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+            slug,
           language,
           code,
           testcases,
