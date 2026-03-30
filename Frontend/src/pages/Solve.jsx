@@ -5,6 +5,7 @@ import axios from 'axios';
 import React from 'react';
 import { toast } from 'react-toastify';   
 import './solve-neon.css';
+import ReactMarkdown from 'react-markdown';
 
 const languageOptions = [
   { label: 'C++', value: 'cpp' },
@@ -375,15 +376,17 @@ const Solve = () => {
 
           {aiLoading && <div className="text-cyan-300 mt-2 text-xs">Loading AI response...</div>}
           {aiReview && (
-            <div className="mt-4 bg-[#181d29] border-l-4 border-[#6c47ff] text-white p-4 rounded shadow text-sm">
-              <b>AI Review:</b><br />{aiReview}
-            </div>
-          )}
-          {aiHint && (
-            <div className="mt-4 bg-[#181d29] border-l-4 border-[#ffb300] text-white p-4 rounded shadow text-sm">
-              <b>AI Hint:</b><br />{aiHint}
-            </div>
-          )}
+  <div className="mt-4 bg-[#181d29] border-l-4 border-[#6c47ff] text-white p-4 rounded shadow text-sm prose prose-invert max-w-none">
+    <b>AI Review:</b>
+    <ReactMarkdown>{aiReview}</ReactMarkdown>
+  </div>
+)}
+{aiHint && (
+  <div className="mt-4 bg-[#181d29] border-l-4 border-[#ffb300] text-white p-4 rounded shadow text-sm prose prose-invert max-w-none">
+    <b>AI Hint:</b>
+    <ReactMarkdown>{aiHint}</ReactMarkdown>
+  </div>
+)}
 
           {/* Test Cases Panel */}
           <div className="mt-6">
