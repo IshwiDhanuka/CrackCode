@@ -20,14 +20,14 @@ const Header = ({ toggleSidebar, isSidebarCollapsed }) => {
   // Remove internal logoMargin logic
 
   return (
-    <header className="bg-black border-b border-gray-800 shadow-md z-50 w-full">
+    <header className="bg-surface border-b border-white/5 z-50 w-full">
       <div className="w-full py-3">
         <div className="flex justify-between items-center w-full">
           {/* Left: CrackCode logo after sidebar */}
           <div className="flex-1 flex items-center transition-all duration-300">
-            <Link to="/" className="flex items-center space-x-2">
-              <Code className="h-6 w-6 text-cyan-400 drop-shadow-neon-cyan animate-neon-glow" />
-              <span className="font-extrabold text-cyan-400 text-lg drop-shadow-neon-cyan animate-neon-glow" style={{textShadow: '0 0 8px #22d3ee, 0 0 16px #22d3ee'}}>CrackCode</span>
+            <Link to="/" className="flex items-center space-x-2 group">
+              <Code className="h-6 w-6 text-primary-container animate-neon" />
+              <span className="font-extrabold text-primary-container text-lg tracking-tight">CrackCode</span>
             </Link>
           </div>
 
@@ -39,18 +39,18 @@ const Header = ({ toggleSidebar, isSidebarCollapsed }) => {
               <div className="flex items-center space-x-4">
                 {user ? (
                   <>
-                  <span className="text-cyan-300 text-sm font-semibold">Hi, {user.username}</span>
+                  <span className="text-on-surface-variant text-sm font-semibold">Hi, {user.username}</span>
                     <button
                       onClick={logout}
-                    className="px-4 py-1.5 text-sm rounded-md border border-cyan-500 text-cyan-400 hover:bg-cyan-500 hover:text-black transition shadow-neon-cyan"
+                    className="px-4 py-1.5 text-sm rounded-md border border-primary-container text-primary-container hover:bg-primary-container hover:text-surface transition"
                     >
                       Logout
                     </button>
                   </>
                 ) : (
                   <>
-                  <Link to="/login" className="px-4 py-1.5 text-sm rounded-md border border-cyan-500 text-cyan-400 hover:bg-cyan-500 hover:text-black transition shadow-neon-cyan">Login</Link>
-                  <Link to="/register" className="px-4 py-1.5 text-sm rounded-md bg-cyan-500 text-black hover:bg-cyan-400 transition shadow-neon-cyan">Sign Up</Link>
+                  <Link to="/login" className="px-4 py-1.5 text-sm font-medium border border-white/10 text-on-surface-variant hover:text-white hover:border-white/20 transition-all rounded-lg">Login</Link>
+                  <Link to="/register" className="px-4 py-1.5 text-sm font-bold bg-primary-container text-surface hover:scale-105 transition-all rounded-lg">Sign Up</Link>
                   </>
                 )}
               </div>

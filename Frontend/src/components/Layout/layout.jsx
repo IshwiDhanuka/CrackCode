@@ -9,7 +9,7 @@ const Layout = ({ children }) => {
   const sidebarWidth = isCollapsed ? "4rem" : "16rem"; // 64px or 256px
 
   return (
-    <div className="bg-black text-white min-h-screen font-sans overflow-x-hidden">
+    <div className="bg-surface text-white min-h-screen font-sans overflow-x-hidden">
       {/* Sidebar (fixed) */}
       <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
 
@@ -21,7 +21,7 @@ const Layout = ({ children }) => {
         }}
       >
         <Header isSidebarCollapsed={isCollapsed} toggleSidebar={() => setIsCollapsed(v => !v)} />
-        <main className="flex-1 p-4 overflow-x-auto">
+        <main className="flex-1 overflow-x-auto">
           <div className="w-full">{children}</div>
         </main>
         <Footer />

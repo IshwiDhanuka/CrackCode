@@ -235,7 +235,7 @@ const Solve = () => {
           language,
           code
         }, { headers: { Authorization: `Bearer ${token}` } });
-      } catch (_) {}
+      } catch (_) { }
 
     } catch (err) {
       setSubmitResults(null);
@@ -286,7 +286,7 @@ const Solve = () => {
       <main className="flex-1 flex flex-row gap-0">
         {/* Left Panel */}
         <section className="w-full md:w-[48%] h-[calc(100vh-64px)] overflow-y-auto p-8 bg-[#10131c] border-r border-[#232b3a] text-white flex flex-col custom-scrollbar">
-          <h2 className="text-2xl font-bold text-white mb-2 neon-heading" style={{textShadow: '0 0 12px #38bdf8, 0 0 24px #38bdf8'}}>
+          <h2 className="text-2xl font-bold text-white mb-2 neon-heading" style={{ textShadow: '0 0 12px #38bdf8, 0 0 24px #38bdf8' }}>
             {problem ? problem.title : 'Loading...'}
           </h2>
           <div className="flex flex-wrap gap-2 mb-4 items-center">
@@ -305,8 +305,8 @@ const Solve = () => {
             {(Array.isArray(problem?.tags)
               ? problem.tags.map(t => t.replace(/[{}]/g, '').trim())
               : (typeof problem?.tags === 'string'
-                  ? problem.tags.split(',').map(t => t.replace(/[{}]/g, '').trim())
-                  : [])
+                ? problem.tags.split(',').map(t => t.replace(/[{}]/g, '').trim())
+                : [])
             ).map(tag => (
               <span key={tag} className="bg-[#232b3a] text-cyan-200 text-xs px-3 py-1 rounded-full font-mono shadow-neon-cyan cursor-pointer hover:bg-[#22d3ee] hover:text-black transition">
                 {tag}
@@ -495,12 +495,11 @@ const Solve = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70">
           <div className="bg-[#181d29] rounded-xl p-8 w-full max-w-md border border-cyan-500/30 shadow-2xl relative flex flex-col items-center">
             <button type="button" className="absolute top-4 right-4 text-cyan-400 hover:text-cyan-200 text-xl" onClick={() => setShowResultModal(false)}>&times;</button>
-            <h2 className={`text-2xl font-bold mb-2 ${
-              resultStats.verdict === 'Accepted' ? 'text-green-400' :
-              resultStats.verdict === 'Wrong Answer' ? 'text-red-400' :
-              resultStats.verdict === 'Compilation Error' ? 'text-yellow-400' :
-              'text-orange-400'
-            }`}>{resultStats.verdict}</h2>
+            <h2 className={`text-2xl font-bold mb-2 ${resultStats.verdict === 'Accepted' ? 'text-green-400' :
+                resultStats.verdict === 'Wrong Answer' ? 'text-red-400' :
+                  resultStats.verdict === 'Compilation Error' ? 'text-yellow-400' :
+                    'text-orange-400'
+              }`}>{resultStats.verdict}</h2>
             <div className="text-cyan-300 text-lg mb-2">{resultStats.passed} / {resultStats.total} testcases passed</div>
             <div className="text-cyan-200 text-base mb-2">Runtime: {resultStats.runtime !== null ? `${resultStats.runtime} ms` : 'N/A'}</div>
             <button className="mt-4 px-6 py-2 bg-cyan-500 text-black font-bold rounded hover:bg-cyan-400 transition" onClick={() => setShowResultModal(false)}>Close</button>

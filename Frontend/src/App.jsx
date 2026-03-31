@@ -11,15 +11,13 @@ import Profile from './pages/Profile';
 import Contests from './pages/Contests';
 import Learning from './pages/Learning';
 import Settings from './pages/Settings';
-// SECURITY V4 FIX: import AdminRoute for admin-only pages
 import PrivateRoute, { AdminRoute } from './components/Layout/PrivateRoute';
 import Leaderboard from './pages/Leaderboard';
+import { motion } from "framer-motion";
+import HeroSection from "./components/HeroSection";
+import FeaturesSection from "./components/FeaturesSection";
+import FloatingSymbolsBackground from "./components/FloatingSymbolsBackground";
 
-/**
- * SECURITY V9 FIX: Centralised logout helper.
- * Call this from any logout button to fully clear session.
- * Import and use in your Layout/navbar component.
- */
 export const logout = (navigate) => {
   localStorage.removeItem('token');
   localStorage.removeItem('user');
@@ -28,34 +26,13 @@ export const logout = (navigate) => {
 
 function Home() {
   return (
-    <div className="min-h-screen w-full bg-black font-sans flex flex-col items-center justify-start pt-8">
-      <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-center text-yellow-400 mt-4 mb-4 tracking-tight animate-neon-glow" style={{textShadow: '0 0 16px #facc15, 0 0 32px #facc15'}}>
-        Welcome to CrackCode
-      </h1>
-      <p className="text-gray-400 text-base md:text-lg text-center mb-12 mt-0 font-medium max-w-2xl">
-        From brute force to optimized elegance—master the craft of code.
-      </p>
-      <div className="max-w-6xl w-full px-4 py-4">
-        <div className="rounded-[2.5rem] p-8 bg-gradient-to-br from-[#0f2027] via-[#2c5364] to-[#232526] shadow-2xl">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <Link to="/contests" className="bg-[#18181b] border border-cyan-500/30 rounded-2xl p-8 shadow-xl hover:scale-105 hover:border-cyan-400 transition-transform cursor-pointer flex flex-col items-center" style={{ textDecoration: 'none' }}>
-              <span className="text-cyan-400 text-5xl font-extrabold mb-3" style={{fontFamily: 'monospace'}}>&lt;/&gt;</span>
-              <h2 className="text-xl font-bold text-cyan-300 mb-2">Contests</h2>
-              <p className="text-gray-400 text-sm text-center">View and participate in upcoming coding contests.</p>
-            </Link>
-            <Link to="/problems" className="bg-[#18181b] border border-cyan-500/30 rounded-2xl p-8 shadow-xl hover:scale-105 hover:border-cyan-400 transition-transform cursor-pointer flex flex-col items-center" style={{ textDecoration: 'none' }}>
-              <svg className="w-10 h-10 mb-3 text-yellow-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 9l3 3-3 3m5 0h3m-7 4h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-              <h2 className="text-xl font-bold text-yellow-300 mb-2">Problems</h2>
-              <p className="text-gray-400 text-sm text-center">Practice DSA & CP problems to sharpen your skills.</p>
-            </Link>
-            <Link to="/leaderboard" className="bg-[#18181b] border border-cyan-500/30 rounded-2xl p-8 shadow-xl hover:scale-105 hover:border-cyan-400 transition-transform cursor-pointer flex flex-col items-center" style={{ textDecoration: 'none' }}>
-              <svg className="w-10 h-10 mb-3 text-violet-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 17v-2a2 2 0 012-2h2a2 2 0 012 2v2m0 0v2a2 2 0 002 2h2a2 2 0 002-2v-2m0 0v-2a2 2 0 012-2h2a2 2 0 012 2v2" /></svg>
-              <h2 className="text-xl font-bold text-violet-300 mb-2">Leaderboard</h2>
-              <p className="text-gray-400 text-sm text-center">Track your rank & progress among top coders.</p>
-            </Link>
-          </div>
-        </div>
-      </div>
+    <div className="min-h-screen w-full bg-[#020617] text-white font-sans selection:bg-[#00F5FF]/30 relative overflow-hidden">
+      <FloatingSymbolsBackground />
+      <HeroSection />
+      <FeaturesSection />
+      
+      {/* Decorative background glow */}
+      <div className="fixed -bottom-1/2 left-1/2 -translate-x-1/2 w-full h-[80%] bg-[#3B82F6] opacity-[0.03] blur-[150px] pointer-events-none rounded-full"></div>
     </div>
   );
 }
@@ -67,10 +44,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/problems" element={<PrivateRoute><Problems /></PrivateRoute>} />
-
-        {/* SECURITY V4 FIX: AdminRoute wraps admin page — client-side gate + backend enforces */}
         <Route path="/adminproblems" element={<AdminRoute><AdminProblems /></AdminRoute>} />
-
         <Route path="/solve/:slug" element={<PrivateRoute><Solve /></PrivateRoute>} />
         <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
         <Route path="/contests" element={<Contests />} />
