@@ -78,11 +78,11 @@ app.post('/run', async (req, res) => {
         }
     }); 
 
-    console.log("✅ Compiler responded successfully");
+    console.log("Compiler responded successfully");
     res.json(response.data);
 
   } catch (err) {
-    console.error("❌ COMPILER PROXY ERROR:");
+    console.error(" COMPILER PROXY ERROR:");
 
     if (err.code === 'ECONNABORTED') {
        console.error("TIMEOUT: AWS took > 45 seconds.");

@@ -1,23 +1,22 @@
 const express = require("express");
 const router = express.Router();
 const Problem = require("../Models/Problems");
-const authMiddleware = require("../Middleware/authMiddleware");
+// FIXED: was importing authMiddleware (which was broken anyway).
+// Admin routes must use adminMiddleware so they stay protected after authMiddleware is corrected.
+const adminMiddleware = require("../Middleware/adminMiddleware");
 
-router.post("/problems", authMiddleware, async (req, res) => {
+router.post("/problems", adminMiddleware, async (req, res) => {
   try {
-    // 1. Destructure to ensure every field is present
-    const { 
-      title, slug, description, difficulty, tags, 
-      constraints, examples, functionName, className, 
-      arguments: args, returnType 
+    const {
+      title, slug, description, difficulty, tags,
+      constraints, examples, functionName, className,
+      arguments: args, returnType
     } = req.body;
 
-    // 2. Manual check (Extra safety)
     if (!constraints) {
-        return res.status(400).json({ success: false, message: "Constraints field is missing in the request." });
+      return res.status(400).json({ success: false, message: "Constraints field is missing." });
     }
 
-    // 3. Create using the explicit variables
     const newProblem = await Problem.create({
       title, slug, description, difficulty, tags,
       constraints, examples, functionName, className,
@@ -30,8 +29,8 @@ router.post("/problems", authMiddleware, async (req, res) => {
     res.status(400).json({ success: false, message: err.message });
   }
 });
-// Get all problems
-router.get("/problems", authMiddleware, async (req, res) => {
+
+router.get("/problems", adminMiddleware, async (req, res) => {
   try {
     const problems = await Problem.find();
     res.status(200).json({ success: true, problems });
@@ -40,8 +39,7 @@ router.get("/problems", authMiddleware, async (req, res) => {
   }
 });
 
-// Get a specific problem by ID
-router.get("/problems/:id", authMiddleware, async (req, res) => {
+router.get("/problems/:id", adminMiddleware, async (req, res) => {
   try {
     const problem = await Problem.findById(req.params.id);
     if (!problem) {
@@ -53,8 +51,7 @@ router.get("/problems/:id", authMiddleware, async (req, res) => {
   }
 });
 
-// Update a problem
-router.put("/problems/:id", authMiddleware, async (req, res) => {
+router.put("/problems/:id", adminMiddleware, async (req, res) => {
   try {
     const updatedProblem = await Problem.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!updatedProblem) {
@@ -66,8 +63,7 @@ router.put("/problems/:id", authMiddleware, async (req, res) => {
   }
 });
 
-// Delete a problem
-router.delete("/problems/:id", authMiddleware, async (req, res) => {
+router.delete("/problems/:id", adminMiddleware, async (req, res) => {
   try {
     const deletedProblem = await Problem.findByIdAndDelete(req.params.id);
     if (!deletedProblem) {

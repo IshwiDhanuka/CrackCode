@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
 const { generateFile } = require('./generateFile');
@@ -10,6 +11,14 @@ const { executeCpp } = require('./executeCpp');
 app.use(cors());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json({ limit: '2mb' }));
+
+// Rate limiting — max 30 requests per minute per IP
+const limiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 30,
+    message: { success: false, error: 'Too many requests. Please slow down.' }
+});
+app.use('/run', limiter);
 
 app.get("/", (req, res) => {
     res.json({ online: 'compiler', status: 'healthy' });
@@ -22,7 +31,7 @@ app.post("/run", async (req, res) => {
         testcases,
         functionName,
         className,
-        arguments: args,   // comma-separated type string e.g. "vector<int>,int"
+        arguments: args,
         returnType
     } = req.body;
 
@@ -30,8 +39,14 @@ app.post("/run", async (req, res) => {
     if (!code || code.trim() === '') {
         return res.status(400).json({ success: false, error: "Empty code submitted." });
     }
+    if (code.length > 50000) {
+        return res.status(400).json({ success: false, error: "Code exceeds maximum allowed size (50KB)." });
+    }
     if (!Array.isArray(testcases) || testcases.length === 0) {
         return res.status(400).json({ success: false, error: "No testcases provided." });
+    }
+    if (testcases.length > 20) {
+        return res.status(400).json({ success: false, error: "Too many testcases. Maximum is 20." });
     }
     if (!functionName) {
         return res.status(400).json({ success: false, error: "functionName is required." });
@@ -43,7 +58,7 @@ app.post("/run", async (req, res) => {
         filePath = await generateFile(language, code, {
             functionName,
             className: className || 'Solution',
-            argumentTypes: args || '',   // <-- KEY FIX: pass argumentTypes
+            argumentTypes: args || '',
             returnType: returnType || 'void'
         });
     } catch (genError) {
@@ -79,7 +94,6 @@ app.post("/run", async (req, res) => {
                     passed: actual === expected
                 });
             } catch (execError) {
-                // One test case failed — record it and continue
                 results.push({
                     input: tc.input,
                     output: execError.error || 'Execution failed',
@@ -89,7 +103,6 @@ app.post("/run", async (req, res) => {
                 });
                 // If compilation error, no point running more cases
                 if (execError.type === 'Compilation Error') {
-                    // Fill remaining with same error
                     for (let i = results.length; i < testcases.length; i++) {
                         const expectedRem = testcases[i].expectedOutput == null ? '' : String(testcases[i].expectedOutput).trim();
                         results.push({

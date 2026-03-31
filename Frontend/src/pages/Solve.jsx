@@ -3,24 +3,37 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import React from 'react';
-import { toast } from 'react-toastify';   
-import './solve-neon.css';
+import { toast } from 'react-toastify';
 import ReactMarkdown from 'react-markdown';
+// SECURITY V5 FIX: rehype-sanitize strips dangerous HTML from AI markdown output
+import rehypeSanitize from 'rehype-sanitize';
+import './solve-neon.css';
 
 const languageOptions = [
   { label: 'C++', value: 'cpp' },
 ];
 
-const getDifficultyColor = (difficulty) => {
-  switch (difficulty) {
-    case 'Easy': return 'bg-green-700 text-green-300';
-    case 'Medium': return 'bg-yellow-700 text-yellow-200';
-    case 'Hard': return 'bg-red-700 text-red-200';
-    default: return 'bg-gray-700 text-gray-300';
-  }
-};
-
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
+// SECURITY V6 FIX: Simple client-side rate limiter
+// Allows at most MAX_CALLS per WINDOW_MS per action
+const createRateLimiter = (maxCalls, windowMs) => {
+  const calls = [];
+  return () => {
+    const now = Date.now();
+    // Remove calls outside the window
+    while (calls.length && calls[0] < now - windowMs) calls.shift();
+    if (calls.length >= maxCalls) return false;
+    calls.push(now);
+    return true;
+  };
+};
+// Max 5 runs per 30 seconds, max 3 submits per 60 seconds
+const canRun = createRateLimiter(5, 30_000);
+const canSubmit = createRateLimiter(3, 60_000);
+
+// SECURITY V7 FIX: Maximum code size (50KB is generous for competitive programming)
+const MAX_CODE_BYTES = 50 * 1024;
 
 const Solve = () => {
   const { slug } = useParams();
@@ -48,7 +61,6 @@ const Solve = () => {
 
   const userHasEdited = useRef(false);
 
-  // Build boilerplate from problem metadata
   const buildBoilerplate = (prob) => {
     if (!prob) return '';
     if (prob.className && prob.className.trim()) {
@@ -60,7 +72,10 @@ const Solve = () => {
   useEffect(() => {
     const fetchProblem = async () => {
       try {
-        const res = await fetch(`${backendUrl}/api/problems/${slug}`);
+        const token = localStorage.getItem('token');
+        const res = await fetch(`${backendUrl}/api/problems/${slug}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         const data = await res.json();
         if (data.success) {
           setProblem(data.problem);
@@ -75,7 +90,6 @@ const Solve = () => {
     fetchProblem();
   }, [slug]);
 
- 
   useEffect(() => {
     if (!userHasEdited.current && problem) {
       setCode(buildBoilerplate(problem));
@@ -101,10 +115,21 @@ const Solve = () => {
     if (problem?._id) fetchSubmissions();
   }, [problem?._id]);
 
-  // FIX Bug 2: handleRun now sends arguments and returnType
   const handleRun = async () => {
     if (!problem || testcases.length === 0) {
       toast.error("Problem data not loaded yet.");
+      return;
+    }
+
+    // SECURITY V6 FIX: rate limit run requests
+    if (!canRun()) {
+      toast.warning("Slow down — you can run at most 5 times per 30 seconds.");
+      return;
+    }
+
+    // SECURITY V7 FIX: reject oversized code
+    if (new TextEncoder().encode(code).length > MAX_CODE_BYTES) {
+      toast.error("Code is too large (max 50KB).");
       return;
     }
 
@@ -114,15 +139,14 @@ const Solve = () => {
 
     try {
       const sampleCases = testcases.filter(tc => tc.isSample);
-
       const payload = {
         slug,
         language,
         code,
         className: problem.className || 'Solution',
         functionName: problem.functionName,
-        arguments: problem.arguments,   
-        returnType: problem.returnType, 
+        arguments: problem.arguments,
+        returnType: problem.returnType,
         testcases: sampleCases.length > 0 ? sampleCases : testcases.slice(0, 1),
       };
 
@@ -138,7 +162,6 @@ const Solve = () => {
         setOutput(`Error (${response.data.type || 'Unknown'}):\n${response.data.error || 'Execution failed'}`);
       }
     } catch (error) {
-      console.error("Run error:", error);
       const errMsg = error.response?.data?.error || error.message || "Error connecting to compiler.";
       const errType = error.response?.data?.type || '';
       setOutput(errType ? `${errType}:\n${errMsg}` : errMsg);
@@ -148,6 +171,18 @@ const Solve = () => {
   };
 
   const handleSubmit = async () => {
+    // SECURITY V6 FIX: rate limit submit requests
+    if (!canSubmit()) {
+      toast.warning("Slow down — you can submit at most 3 times per 60 seconds.");
+      return;
+    }
+
+    // SECURITY V7 FIX: reject oversized code
+    if (new TextEncoder().encode(code).length > MAX_CODE_BYTES) {
+      toast.error("Code is too large (max 50KB).");
+      return;
+    }
+
     setSubmitLoading(true);
     setSubmitResults(null);
     setSubmitVerdict(null);
@@ -158,7 +193,7 @@ const Solve = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            slug,
+          slug,
           language,
           code,
           testcases,
@@ -178,7 +213,6 @@ const Solve = () => {
       if (data.success && Array.isArray(data.results)) {
         setSubmitResults(data.results);
         passed = data.results.filter(tc => tc.passed).length;
-        // Check for specific error types
         const hasCompilationError = data.results.some(r => r.errorType === 'Compilation Error');
         const hasRuntimeError = data.results.some(r => r.errorType === 'Runtime Error');
         if (hasCompilationError) verdict = 'Compilation Error';
@@ -186,7 +220,6 @@ const Solve = () => {
         else verdict = data.results.every(tc => tc.passed) ? 'Accepted' : 'Wrong Answer';
         setSubmitVerdict(verdict);
       } else {
-        setSubmitResults(null);
         verdict = data.type || 'Error';
         setSubmitVerdict(verdict);
       }
@@ -194,7 +227,6 @@ const Solve = () => {
       setResultStats({ verdict, passed, total, runtime: endTime - startTime });
       setShowResultModal(true);
 
-      // Save submission to backend
       try {
         const token = localStorage.getItem('token');
         await axios.post(`${backendUrl}/api/submissions`, {
@@ -218,7 +250,11 @@ const Solve = () => {
     setAILoading(true);
     setAIReview('');
     try {
-      const res = await axios.post(`${backendUrl}/api/ai/review`, { code, problem: problem?.description || '' });
+      const token = localStorage.getItem('token');
+      const res = await axios.post(`${backendUrl}/api/ai/review`,
+        { code, problem: problem?.description || '' },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       setAIReview(res.data.review);
     } catch (err) {
       setAIReview('AI review failed.');
@@ -230,7 +266,11 @@ const Solve = () => {
     setAILoading(true);
     setAIHint('');
     try {
-      const res = await axios.post(`${backendUrl}/api/ai/hint`, { problem: problem?.description || '' });
+      const token = localStorage.getItem('token');
+      const res = await axios.post(`${backendUrl}/api/ai/hint`,
+        { problem: problem?.description || '' },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       setAIHint(res.data.hint);
     } catch (err) {
       setAIHint('AI hint failed.');
@@ -324,10 +364,14 @@ const Solve = () => {
               value={code}
               onChange={e => {
                 setCode(e.target.value);
-                userHasEdited.current = true;  // FIX Bug 3: mark as edited
+                userHasEdited.current = true;
               }}
               spellCheck={false}
             />
+            {/* SECURITY V7: Show code size warning */}
+            {code.length > 40_000 && (
+              <p className="text-yellow-400 text-xs mt-1">Warning: code is large ({(new TextEncoder().encode(code).length / 1024).toFixed(1)}KB / 50KB max)</p>
+            )}
           </div>
           <div className="flex gap-2 mb-2 flex-wrap">
             <button
@@ -361,12 +405,12 @@ const Solve = () => {
           </div>
 
           {showOutput && (
-            <div className="mt-4 animate-in fade-in duration-300">
+            <div className="mt-4">
               <div className="flex justify-between items-center mb-2">
                 <label className="text-cyan-400 text-xs font-bold tracking-widest uppercase">Terminal Output</label>
-                <button onClick={() => setShowOutput(false)} className="text-gray-500 hover:text-white text-xs transition-colors">[Clear]</button>
+                <button onClick={() => setShowOutput(false)} className="text-gray-500 hover:text-white text-xs">[Clear]</button>
               </div>
-              <pre className="w-full min-h-[120px] max-h-[250px] bg-[#05070a] text-green-400 font-mono rounded-lg p-4 border border-cyan-900/50 overflow-auto text-xs shadow-[inset_0_0_10px_rgba(0,0,0,0.5)]">
+              <pre className="w-full min-h-[120px] max-h-[250px] bg-[#05070a] text-green-400 font-mono rounded-lg p-4 border border-cyan-900/50 overflow-auto text-xs">
                 {isRunning
                   ? <span className="animate-pulse">Executing on Docker...</span>
                   : output || "No output."}
@@ -375,18 +419,20 @@ const Solve = () => {
           )}
 
           {aiLoading && <div className="text-cyan-300 mt-2 text-xs">Loading AI response...</div>}
+
+          {/* SECURITY V5 FIX: rehypeSanitize strips any HTML/script tags from AI output */}
           {aiReview && (
-  <div className="mt-4 bg-[#181d29] border-l-4 border-[#6c47ff] text-white p-4 rounded shadow text-sm prose prose-invert max-w-none">
-    <b>AI Review:</b>
-    <ReactMarkdown>{aiReview}</ReactMarkdown>
-  </div>
-)}
-{aiHint && (
-  <div className="mt-4 bg-[#181d29] border-l-4 border-[#ffb300] text-white p-4 rounded shadow text-sm prose prose-invert max-w-none">
-    <b>AI Hint:</b>
-    <ReactMarkdown>{aiHint}</ReactMarkdown>
-  </div>
-)}
+            <div className="mt-4 bg-[#181d29] border-l-4 border-[#6c47ff] text-white p-4 rounded shadow text-sm prose prose-invert max-w-none">
+              <b>AI Review:</b>
+              <ReactMarkdown rehypePlugins={[rehypeSanitize]}>{aiReview}</ReactMarkdown>
+            </div>
+          )}
+          {aiHint && (
+            <div className="mt-4 bg-[#181d29] border-l-4 border-[#ffb300] text-white p-4 rounded shadow text-sm prose prose-invert max-w-none">
+              <b>AI Hint:</b>
+              <ReactMarkdown rehypePlugins={[rehypeSanitize]}>{aiHint}</ReactMarkdown>
+            </div>
+          )}
 
           {/* Test Cases Panel */}
           <div className="mt-6">

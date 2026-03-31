@@ -11,8 +11,20 @@ import Profile from './pages/Profile';
 import Contests from './pages/Contests';
 import Learning from './pages/Learning';
 import Settings from './pages/Settings';
-import PrivateRoute from './components/Layout/PrivateRoute';
+// SECURITY V4 FIX: import AdminRoute for admin-only pages
+import PrivateRoute, { AdminRoute } from './components/Layout/PrivateRoute';
 import Leaderboard from './pages/Leaderboard';
+
+/**
+ * SECURITY V9 FIX: Centralised logout helper.
+ * Call this from any logout button to fully clear session.
+ * Import and use in your Layout/navbar component.
+ */
+export const logout = (navigate) => {
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  if (navigate) navigate('/login', { replace: true });
+};
 
 function Home() {
   return (
@@ -55,8 +67,10 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/problems" element={<PrivateRoute><Problems /></PrivateRoute>} />
-        <Route path="/adminproblems" element={<PrivateRoute><AdminProblems /></PrivateRoute>} />
-        {/* FIX Bug 6: /solve/:slug now requires authentication */}
+
+        {/* SECURITY V4 FIX: AdminRoute wraps admin page — client-side gate + backend enforces */}
+        <Route path="/adminproblems" element={<AdminRoute><AdminProblems /></AdminRoute>} />
+
         <Route path="/solve/:slug" element={<PrivateRoute><Solve /></PrivateRoute>} />
         <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
         <Route path="/contests" element={<Contests />} />

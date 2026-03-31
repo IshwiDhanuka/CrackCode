@@ -6,22 +6,26 @@ const jwt = require('jsonwebtoken');
 
 console.log('Auth routes loaded');
 
-//Register route
-router.post("/register", async (req, res) => {
-  const { username, email, password, role } = req.body;
-  console.log("Request body:", req.body);
+// Helper: get UTC midnight timestamp — DST safe
+const utcMidnight = (date) => {
+  const d = new Date(date);
+  return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+};
 
-  if (!username?.trim() || !email?.trim() || !password?.trim() || !role?.trim()) {
+// Register route
+router.post("/register", async (req, res) => {
+  const { username, email, password } = req.body;
+  console.log("Register request:", { username, email });
+
+  if (!username?.trim() || !email?.trim() || !password?.trim()) {
     return res.status(400).json({
       success: false,
       message: "Please enter all the information"
     });
   }
-  
 
   try {
     const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
-
     if (existingUser) {
       return res.status(409).json({
         success: false,
@@ -31,11 +35,12 @@ router.post("/register", async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // SECURITY FIX: role is ALWAYS 'user' — never accept role from request body.
     const user = await User.create({
       username: username.trim(),
       email: email.toLowerCase().trim(),
       password: hashedPassword,
-      role: role.trim()
+      role: 'user'
     });
 
     const token = jwt.sign(
@@ -63,10 +68,8 @@ router.post("/register", async (req, res) => {
   }
 });
 
-
-//Login route
+// Login route
 router.post("/login", async (req, res) => {
-  console.log("Login request body:", req.body); // Debug log
   const { email, password } = req.body;
 
   if (!email?.trim() || !password?.trim()) {
@@ -80,53 +83,56 @@ router.post("/login", async (req, res) => {
     const user = await User.findOne({ email: email.toLowerCase().trim() });
 
     if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid credentials"
-      });
+      return res.status(401).json({ success: false, message: "Invalid credentials" });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid credentials"
-      });
+      return res.status(401).json({ success: false, message: "Invalid credentials" });
     }
 
-    // --- Streak and loginHistory logic ---
-    const today = new Date();
-    today.setHours(0,0,0,0);
+    // FIX: use UTC midnight for DST-safe date comparison
+    const todayUTC = utcMidnight(new Date());
     let loginHistory = user.loginHistory || [];
     let streak = user.streak || 0;
-    if (!loginHistory.some(date => new Date(date).getTime() === today.getTime())) {
-      // Add today to loginHistory
-      loginHistory.push(today);
-      // Sort and keep only unique days
-      loginHistory = Array.from(new Set(loginHistory.map(d => new Date(d).setHours(0,0,0,0)))).map(ts => new Date(ts));
-      loginHistory.sort((a, b) => a - b);
-      // Calculate streak
+
+    const alreadyLoggedToday = loginHistory.some(
+      date => utcMidnight(date) === todayUTC
+    );
+
+    if (!alreadyLoggedToday) {
+      loginHistory.push(new Date(todayUTC));
+
+      // Deduplicate and sort by UTC midnight
+      const uniqueTimestamps = Array.from(
+        new Set(loginHistory.map(d => utcMidnight(d)))
+      ).sort((a, b) => a - b);
+
+      loginHistory = uniqueTimestamps.map(ts => new Date(ts));
+
+      // Recalculate streak from sorted history
       streak = 1;
-      for (let i = loginHistory.length - 2; i >= 0; i--) {
-        const diff = (loginHistory[i+1] - loginHistory[i]) / (1000*60*60*24);
-        if (diff === 1) streak++;
-        else if (diff > 1) break;
+      for (let i = uniqueTimestamps.length - 2; i >= 0; i--) {
+        const diffMs = uniqueTimestamps[i + 1] - uniqueTimestamps[i];
+        const diffDays = diffMs / (1000 * 60 * 60 * 24);
+        if (diffDays === 1) streak++;
+        else if (diffDays > 1) break;
       }
     }
-    // --- Badges logic ---
+
+    // Badges logic
     let badges = user.badges || [];
     const badgeTemplates = [
       { name: "Streak 3 Days", icon: "🔥", condition: s => s >= 3 },
       { name: "Streak 7 Days", icon: "🔥", condition: s => s >= 7 },
-      { name: "100 Problems", icon: "🏅", condition: () => (user.problemsSolved || 0) >= 100 },
-      { name: "Early Bird", icon: "🌅", condition: () => true }
+      { name: "100 Problems",  icon: "🏅", condition: () => (user.problemsSolved || 0) >= 100 },
     ];
     badgeTemplates.forEach(b => {
       if (b.condition(streak) && !badges.some(bad => bad.name === b.name)) {
         badges.push({ name: b.name, icon: b.icon, achievedAt: new Date() });
       }
     });
-    // Save user
+
     user.loginHistory = loginHistory;
     user.streak = streak;
     user.badges = badges;
