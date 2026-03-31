@@ -1,9 +1,11 @@
 const express = require('express');
+
 const cors = require('cors');
 const fs = require('fs');
 const rateLimit = require('express-rate-limit');
 
 const app = express();
+app.set('trust proxy', 1);
 const { generateFile } = require('./generateFile');
 const { generateInputFile } = require('./generateInputFile');
 const { executeCpp } = require('./executeCpp');
@@ -131,12 +133,12 @@ app.post("/run", async (req, res) => {
         // Cleanup all generated input files
         for (const p of inputPaths) {
             if (fs.existsSync(p)) {
-                try { fs.unlinkSync(p); } catch (_) {}
+                try { fs.unlinkSync(p); } catch (_) { }
             }
         }
         // Cleanup the generated .cpp source file
         if (filePath && fs.existsSync(filePath)) {
-            try { fs.unlinkSync(filePath); } catch (_) {}
+            try { fs.unlinkSync(filePath); } catch (_) { }
         }
     }
 });

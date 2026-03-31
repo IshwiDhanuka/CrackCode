@@ -1,4 +1,4 @@
-const { execFile } = require("child_process");
+const { execFile, spawn } = require("child_process");
 const fs = require("fs");
 const path = require("path");
 
@@ -26,10 +26,25 @@ const executeCpp = (filePath, inputPath) => {
                 return reject({ error: "Failed to set executable permissions", type: "Runtime Error" });
             }
 
-            // Step 3: Run binary using execFile — no shell, pass input via stdin
+            // Step 3: Run binary using spawn — properly pipes stdin
             const inputData = fs.readFileSync(inputPath, 'utf8');
+            console.log(`[DEBUG] Job: ${jobId}`);
+            console.log(`[DEBUG] Input data: ${JSON.stringify(inputData)}`);
+            console.log(`[DEBUG] ExePath: ${exePath}`);
 
-            execFile(exePath, [], { timeout: 5000, input: inputData }, (runError, runStdout, runStderr) => {
+            const child = spawn(exePath, [], { timeout: 5000 });
+
+            let runStdout = '';
+            let runStderr = '';
+
+            child.stdout.on('data', d => runStdout += d);
+            child.stderr.on('data', d => runStderr += d);
+
+            // Write input to stdin and close it
+            child.stdin.write(inputData);
+            child.stdin.end();
+
+            child.on('close', (code, signal) => {
                 // Cleanup binary after running
                 if (fs.existsSync(exePath)) {
                     try { fs.unlinkSync(exePath); } catch (cleanupErr) {
@@ -37,15 +52,22 @@ const executeCpp = (filePath, inputPath) => {
                     }
                 }
 
-                if (runError) {
-                    // Correctly label TLE as its own type, not Runtime Error
-                    if (runError.killed) {
-                        return reject({ error: "Time Limit Exceeded (5s)", type: "Time Limit Exceeded" });
-                    }
-                    return reject({ error: runStderr || runError.message, type: "Runtime Error" });
-                }
+                console.log(`[DEBUG] runStdout: ${JSON.stringify(runStdout)}`);
+                console.log(`[DEBUG] runStderr: ${JSON.stringify(runStderr)}`);
+                console.log(`[DEBUG] code: ${code}, signal: ${signal}`);
 
+                if (signal === 'SIGTERM' || code === null) {
+                    return reject({ error: "Time Limit Exceeded (5s)", type: "Time Limit Exceeded" });
+                }
+                if (code !== 0) {
+                    return reject({ error: runStderr || 'Runtime error', type: "Runtime Error" });
+                }
                 resolve(runStdout);
+            });
+
+            child.on('error', err => {
+                console.log(`[DEBUG] spawn error: ${err.message}`);
+                reject({ error: err.message, type: "Runtime Error" });
             });
         });
     });
