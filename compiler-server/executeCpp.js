@@ -14,7 +14,8 @@ const executeCpp = (filePath, inputPath) => {
 
     return new Promise((resolve, reject) => {
         // Step 1: Compile using execFile — no shell interpolation, prevents command injection
-        execFile("g++", ["-std=c++20", filePath, "-o", exePath], (error, stdout, stderr) => {
+        const includePath = path.join(__dirname, "include");
+        execFile("g++", ["-std=c++20", "-I", includePath, filePath, "-o", exePath], (error, stdout, stderr) => {
             if (error) {
                 return reject({ error: stderr || error.message, type: "Compilation Error" });
             }

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { X, Plus, Trash2 } from 'lucide-react';
 
 const defaultProblem = {
   title: '',
@@ -20,20 +21,54 @@ const defaultProblem = {
 
 const difficulties = ['Easy', 'Medium', 'Hard'];
 
-export default function ProblemForm({ problem, onClose, onSaved }) {
-  const [form, setForm] = useState(defaultProblem);
-  const [saving, setSaving] = useState(false);
-  const [tcVars, setTcVars] = useState([{ name: '', value: '' }]);
-  const [tcOutput, setTcOutput] = useState('');
-  const [tcType, setTcType] = useState('Sample');
-  const [exampleInput, setExampleInput] = useState('');
-  const [exampleOutput, setExampleOutput] = useState('');
-  const [exampleExplanation, setExampleExplanation] = useState('');
-  const [examples, setExamples] = useState([]);
-  const [ready, setReady] = useState(false);
-  const navigate = useNavigate();
-  const isEdit = !!problem;
+const CYAN        = '#38bdf8';
+const BORDER      = 'rgba(56,189,248,0.15)';
+const BORDER_SUB  = 'rgba(56,189,248,0.08)';
+const INPUT_BG    = 'rgba(255,255,255,0.03)';
+const SECTION_BG  = 'rgba(56,189,248,0.03)';
 
+const inputStyle = {
+  background: INPUT_BG,
+  border: `1px solid ${BORDER}`,
+  borderRadius: '8px',
+  color: '#fff',
+  outline: 'none',
+  width: '100%',
+  padding: '8px 12px',
+  fontSize: '14px',
+  fontFamily: 'inherit',
+  transition: 'border-color 0.2s',
+};
+
+const labelStyle = {
+  fontSize: '10px',
+  fontWeight: 700,
+  letterSpacing: '0.1em',
+  textTransform: 'uppercase',
+  color: 'rgba(56,189,248,0.6)',
+  marginBottom: '4px',
+  display: 'block',
+};
+
+const monoInputStyle = {
+  ...inputStyle,
+  fontFamily: 'monospace',
+  color: '#a5f3fc',
+};
+
+export default function ProblemForm({ problem, onClose, onSaved }) {
+  const [form, setForm]                       = useState(defaultProblem);
+  const [saving, setSaving]                   = useState(false);
+  const [tcVars, setTcVars]                   = useState([{ name: '', value: '' }]);
+  const [tcOutput, setTcOutput]               = useState('');
+  const [tcType, setTcType]                   = useState('Sample');
+  const [exampleInput, setExampleInput]       = useState('');
+  const [exampleOutput, setExampleOutput]     = useState('');
+  const [exampleExplanation, setExampleExplanation] = useState('');
+  const [examples, setExamples]               = useState([]);
+  const [ready, setReady]                     = useState(false);
+  const navigate  = useNavigate();
+  const isEdit    = !!problem;
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   useEffect(() => {
@@ -50,235 +85,330 @@ export default function ProblemForm({ problem, onClose, onSaved }) {
     setReady(true);
   }, [problem]);
 
-  const handleChange = e => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
 
   const addExample = () => {
     if (!exampleInput.trim() || !exampleOutput.trim()) return;
     setExamples([...examples, { input: exampleInput, output: exampleOutput, explanation: exampleExplanation }]);
-    setExampleInput('');
-    setExampleOutput('');
-    setExampleExplanation('');
+    setExampleInput(''); setExampleOutput(''); setExampleExplanation('');
   };
-
-  const removeExample = idx => {
-    setExamples(examples.filter((_, i) => i !== idx));
-  };
+  const removeExample = idx => setExamples(examples.filter((_, i) => i !== idx));
 
   const addTcVar = () => setTcVars([...tcVars, { name: '', value: '' }]);
   const removeTcVar = idx => setTcVars(tcVars.filter((_, i) => i !== idx));
-  
-  const handleTcVarChange = (idx, field, val) => {
+  const handleTcVarChange = (idx, field, val) =>
     setTcVars(tcVars.map((v, i) => i === idx ? { ...v, [field]: val } : v));
-  };
 
   const addTestCase = () => {
     if (!tcVars.every(v => v.value.trim()) || !tcOutput.trim()) {
-      toast.warn("Please provide values for all variables and expected output.");
+      toast.warn('Please provide values for all variables and expected output.');
       return;
     }
-    
     const formattedInputs = tcVars.map(v => {
       const val = v.value.trim();
       if (val.startsWith('[') && val.endsWith(']')) {
         try {
-          const cleanedVal = val.replace(/'/g, '"');
-          const parsedArray = JSON.parse(cleanedVal);
-          if (Array.isArray(parsedArray)) {
-            return `${parsedArray.length} ${parsedArray.join(' ')}`;
-          }
-        } catch (e) {
-          return val;
-        }
+          const parsed = JSON.parse(val.replace(/'/g, '"'));
+          if (Array.isArray(parsed)) return `${parsed.length} ${parsed.join(' ')}`;
+        } catch { return val; }
       }
-      return val; 
+      return val;
     });
-
-    const rawInput = formattedInputs.join('\n');
-    
     setForm({
       ...form,
-      testcases: [
-        ...form.testcases, 
-        { 
-          inputs: tcVars.map(v => ({ ...v })), 
-          input: rawInput,                     
-          expectedOutput: tcOutput.trim(), 
-          isSample: tcType === 'Sample' 
-        }
-      ]
+      testcases: [...form.testcases, {
+        inputs: tcVars.map(v => ({ ...v })),
+        input: formattedInputs.join('\n'),
+        expectedOutput: tcOutput.trim(),
+        isSample: tcType === 'Sample',
+      }],
     });
-    
-    setTcVars([{ name: '', value: '' }]);
-    setTcOutput('');
+    setTcVars([{ name: '', value: '' }]); setTcOutput('');
   };
-
-  const removeTestCase = idx => {
-    setForm({
-      ...form,
-      testcases: form.testcases.filter((_, i) => i !== idx)
-    });
-  };
+  const removeTestCase = idx => setForm({ ...form, testcases: form.testcases.filter((_, i) => i !== idx) });
 
   const handleSubmit = async e => {
-    e.preventDefault();
-    setSaving(true);
+    e.preventDefault(); setSaving(true);
     try {
-      const token = localStorage.getItem('token'); 
-      const config = { 
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json' 
-        } 
-      };
-
+      const token = localStorage.getItem('token');
+      const config = { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } };
       const payload = {
         ...form,
         tags: form.tags ? form.tags.split(',').map(t => t.trim()) : [],
-        examples: examples,
+        examples,
         testcases: form.testcases.map(tc => ({
-          input: tc.input,
-          expectedOutput: tc.expectedOutput,
-          isSample: tc.isSample,
-          inputs: tc.inputs 
+          input: tc.input, expectedOutput: tc.expectedOutput, isSample: tc.isSample, inputs: tc.inputs,
         })),
         functionName: form.functionName.trim(),
         className: form.className.trim() || 'Solution',
         arguments: form.arguments.trim(),
-        returnType: form.returnType.trim()
+        returnType: form.returnType.trim(),
       };
-
       if (isEdit) {
         await axios.put(`${backendUrl}/api/problems/${problem.slug}`, payload, config);
       } else {
         await axios.post(`${backendUrl}/api/problems`, payload, config);
       }
-
       toast.success('Problem saved successfully!');
       if (onSaved) onSaved();
       if (onClose) onClose();
       navigate('/problems');
     } catch (err) {
-      const errorMsg = err.response?.data?.message || err.message || 'Error saving problem';
-      toast.error(errorMsg);
-    } finally {
-      setSaving(false);
-    }
+      toast.error(err.response?.data?.message || err.message || 'Error saving problem');
+    } finally { setSaving(false); }
   };
 
   if (!ready) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-      <form onSubmit={handleSubmit} className="bg-[#111318] rounded-xl p-6 w-full max-w-3xl border border-cyan-500/20 shadow-2xl relative overflow-y-auto max-h-[90vh] custom-scrollbar">
-        <button type="button" className="absolute top-4 right-4 text-gray-500 hover:text-white" onClick={onClose}>&times;</button>
-        
-        <h2 className="text-2xl font-bold text-cyan-400 mb-6">{isEdit ? 'Edit Problem' : 'New Problem'}</h2>
+  const focusIn  = e => { e.target.style.borderColor = CYAN; e.target.style.boxShadow = '0 0 0 2px rgba(56,189,248,0.1)'; };
+  const focusOut = e => { e.target.style.borderColor = BORDER; e.target.style.boxShadow = 'none'; };
 
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: 'rgba(2,6,23,0.85)', backdropFilter: 'blur(8px)' }}>
+      <form onSubmit={handleSubmit}
+        className="relative w-full max-w-3xl overflow-y-auto"
+        style={{
+          background: '#020617',
+          border: `1px solid ${BORDER}`,
+          borderRadius: '16px',
+          boxShadow: '0 0 60px rgba(56,189,248,0.1)',
+          maxHeight: '90vh',
+          padding: '32px',
+        }}>
+
+        {/* Close */}
+        <button type="button" onClick={onClose}
+          className="absolute top-5 right-5 p-1.5 rounded-lg transition-all duration-200"
+          style={{ color: 'rgba(255,255,255,0.4)', border: `1px solid ${BORDER_SUB}` }}
+          onMouseEnter={e => { e.currentTarget.style.color = '#fff'; e.currentTarget.style.background = 'rgba(56,189,248,0.08)'; }}
+          onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.4)'; e.currentTarget.style.background = 'transparent'; }}>
+          <X size={16} />
+        </button>
+
+        {/* Title */}
+        <h2 className="text-2xl font-extrabold text-white mb-1">
+          {isEdit ? 'Edit' : 'New'} <span style={{ color: CYAN }}>Problem</span>
+        </h2>
+        <p className="font-mono text-xs mb-8" style={{ color: 'rgba(56,189,248,0.4)' }}>
+          // {isEdit ? 'update existing challenge' : 'add a new challenge to the arena'}
+        </p>
+
+        {/* Basic fields */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          {[
+            { name: 'title', label: 'Title', placeholder: 'e.g. Two Sum' },
+            { name: 'slug',  label: 'Slug (URL Key)', placeholder: 'e.g. two-sum' },
+          ].map(f => (
+            <div key={f.name} className="flex flex-col gap-1">
+              <label style={labelStyle}>{f.label}</label>
+              <input name={f.name} value={form[f.name]} onChange={handleChange}
+                placeholder={f.placeholder} required
+                style={inputStyle} onFocus={focusIn} onBlur={focusOut} />
+            </div>
+          ))}
+
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-bold text-cyan-500 uppercase">Title</label>
-            <input name="title" value={form.title} onChange={handleChange} placeholder="e.g. Two Sum" className="px-3 py-2 rounded bg-[#1c212c] border border-gray-700 text-white focus:border-cyan-500 outline-none" required />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-bold text-cyan-500 uppercase">Slug (URL Key)</label>
-            <input name="slug" value={form.slug} onChange={handleChange} placeholder="e.g. two-sum" className="px-3 py-2 rounded bg-[#1c212c] border border-gray-700 text-white focus:border-cyan-500 outline-none" required />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-bold text-cyan-500 uppercase">Difficulty</label>
-            <select name="difficulty" value={form.difficulty} onChange={handleChange} className="px-3 py-2 rounded bg-[#1c212c] border border-gray-700 text-white outline-none">
-              {difficulties.map(d => <option key={d} value={d}>{d}</option>)}
+            <label style={labelStyle}>Difficulty</label>
+            <select name="difficulty" value={form.difficulty} onChange={handleChange}
+              style={{ ...inputStyle, cursor: 'pointer' }}
+              onFocus={focusIn} onBlur={focusOut}>
+              {difficulties.map(d => <option key={d} value={d} style={{ background: '#020617' }}>{d}</option>)}
             </select>
           </div>
+
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-bold text-cyan-500 uppercase">Tags</label>
-            <input name="tags" value={form.tags} onChange={handleChange} placeholder="Array, Hash Table" className="px-3 py-2 rounded bg-[#1c212c] border border-gray-700 text-white outline-none" />
+            <label style={labelStyle}>Tags</label>
+            <input name="tags" value={form.tags} onChange={handleChange}
+              placeholder="Array, Hash Table"
+              style={inputStyle} onFocus={focusIn} onBlur={focusOut} />
           </div>
         </div>
 
-        <div className="bg-black/30 p-4 rounded-lg border border-cyan-900/30 mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-bold text-yellow-500 uppercase">Return Type</label>
-            <input name="returnType" value={form.returnType} onChange={handleChange} placeholder="vector<int>" className="px-3 py-2 rounded bg-[#0a0c10] border border-gray-800 text-cyan-100 font-mono text-sm" required />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-bold text-yellow-500 uppercase">Function Name</label>
-            <input name="functionName" value={form.functionName} onChange={handleChange} placeholder="twoSum" className="px-3 py-2 rounded bg-[#0a0c10] border border-gray-800 text-cyan-100 font-mono text-sm" required />
-          </div>
-          <div className="flex flex-col gap-1 md:col-span-2">
-            <label className="text-xs font-bold text-yellow-500 uppercase">Arguments</label>
-            <input name="arguments" value={form.arguments} onChange={handleChange} placeholder="vector<int>& nums, int target" className="px-3 py-2 rounded bg-[#0a0c10] border border-gray-800 text-cyan-100 font-mono text-sm" required />
+        {/* Function signature block */}
+        <div className="mb-6 p-4 rounded-xl" style={{ background: SECTION_BG, border: `1px solid ${BORDER}` }}>
+          <p className="text-[10px] font-bold uppercase tracking-widest mb-4" style={{ color: 'rgba(250,204,21,0.6)' }}>
+            Function Signature
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[
+              { name: 'returnType',   label: 'Return Type',   placeholder: 'vector<int>' },
+              { name: 'functionName', label: 'Function Name', placeholder: 'twoSum' },
+            ].map(f => (
+              <div key={f.name} className="flex flex-col gap-1">
+                <label style={{ ...labelStyle, color: 'rgba(250,204,21,0.6)' }}>{f.label}</label>
+                <input name={f.name} value={form[f.name]} onChange={handleChange}
+                  placeholder={f.placeholder} required
+                  style={monoInputStyle} onFocus={focusIn} onBlur={focusOut} />
+              </div>
+            ))}
+            <div className="flex flex-col gap-1 md:col-span-2">
+              <label style={{ ...labelStyle, color: 'rgba(250,204,21,0.6)' }}>Arguments</label>
+              <input name="arguments" value={form.arguments} onChange={handleChange}
+                placeholder="vector<int>& nums, int target" required
+                style={monoInputStyle} onFocus={focusIn} onBlur={focusOut} />
+            </div>
           </div>
         </div>
 
-        <textarea name="description" value={form.description} onChange={handleChange} placeholder="Problem Description..." className="w-full mb-4 px-3 py-2 rounded bg-[#1c212c] border border-gray-700 text-white min-h-[100px]" rows={4} required />
+        {/* Description */}
+        <div className="flex flex-col gap-1 mb-4">
+          <label style={labelStyle}>Problem Description</label>
+          <textarea name="description" value={form.description} onChange={handleChange}
+            placeholder="Problem Description..." required rows={4}
+            style={{ ...inputStyle, minHeight: '100px', resize: 'vertical' }}
+            onFocus={focusIn} onBlur={focusOut} />
+        </div>
 
+        {/* Constraints */}
         <div className="flex flex-col gap-1 mb-6">
-          <label className="text-xs font-bold text-cyan-500 uppercase tracking-wider">Constraints</label>
-          <textarea name="constraints" value={form.constraints} onChange={handleChange} placeholder="e.g. 1 <= nums.length <= 10^4" className="w-full px-3 py-2 rounded bg-[#1c212c] border border-gray-700 text-white focus:border-cyan-500 outline-none min-h-[80px]" rows={3} required />
+          <label style={labelStyle}>Constraints</label>
+          <textarea name="constraints" value={form.constraints} onChange={handleChange}
+            placeholder="e.g. 1 <= nums.length <= 10^4" required rows={3}
+            style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }}
+            onFocus={focusIn} onBlur={focusOut} />
         </div>
 
-        <div className="mb-6 p-4 border border-gray-800 rounded-lg">
-          <h3 className="text-cyan-400 font-bold mb-3 flex items-center gap-2">Example UI Displays</h3>
+        {/* Examples */}
+        <div className="mb-6 p-4 rounded-xl" style={{ background: SECTION_BG, border: `1px solid ${BORDER}` }}>
+          <p className="text-[10px] font-bold uppercase tracking-widest mb-4" style={{ color: 'rgba(56,189,248,0.6)' }}>
+            Example UI Displays
+          </p>
           <div className="flex flex-col gap-2 mb-3">
-            <input value={exampleInput} onChange={e => setExampleInput(e.target.value)} placeholder="Input string" className="px-3 py-1 text-sm rounded bg-[#1c212c] border border-gray-700 text-white" />
-            <input value={exampleOutput} onChange={e => setExampleOutput(e.target.value)} placeholder="Output string" className="px-3 py-1 text-sm rounded bg-[#1c212c] border border-gray-700 text-white" />
-            <textarea value={exampleExplanation} onChange={e => setExampleExplanation(e.target.value)} placeholder="Explanation (optional)" className="px-3 py-1 text-sm rounded bg-[#1c212c] border border-gray-700 text-white" rows={2} />
-            <button type="button" onClick={addExample} className="bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold py-2 rounded transition">Add to Examples</button>
+            {[
+              { val: exampleInput,       set: setExampleInput,       ph: 'Input string' },
+              { val: exampleOutput,      set: setExampleOutput,      ph: 'Output string' },
+              { val: exampleExplanation, set: setExampleExplanation, ph: 'Explanation (optional)', area: true },
+            ].map((f, i) => f.area
+              ? <textarea key={i} value={f.val} onChange={e => f.set(e.target.value)} placeholder={f.ph} rows={2}
+                  style={{ ...inputStyle, resize: 'vertical' }} onFocus={focusIn} onBlur={focusOut} />
+              : <input key={i} value={f.val} onChange={e => f.set(e.target.value)} placeholder={f.ph}
+                  style={inputStyle} onFocus={focusIn} onBlur={focusOut} />
+            )}
+            <button type="button" onClick={addExample}
+              className="py-2 rounded-lg text-sm font-bold transition-all duration-200"
+              style={{ background: 'linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%)', color: '#000', border: 'none', boxShadow: '0 0 16px rgba(56,189,248,0.25)' }}
+              onMouseEnter={e => e.currentTarget.style.boxShadow = '0 0 24px rgba(56,189,248,0.4)'}
+              onMouseLeave={e => e.currentTarget.style.boxShadow = '0 0 16px rgba(56,189,248,0.25)'}>
+              Add to Examples
+            </button>
           </div>
           <div className="space-y-2">
             {examples.map((ex, idx) => (
-              <div key={idx} className="flex justify-between items-start bg-black/40 p-2 rounded text-xs border border-gray-800">
+              <div key={idx} className="flex justify-between items-start p-3 rounded-lg text-xs"
+                style={{ background: 'rgba(255,255,255,0.02)', border: `1px solid ${BORDER_SUB}` }}>
                 <div>
-                  <div className="text-green-400">In: {ex.input}</div>
-                  <div className="text-blue-400">Out: {ex.output}</div>
+                  <div style={{ color: '#4ade80' }}>In: {ex.input}</div>
+                  <div style={{ color: CYAN }}>Out: {ex.output}</div>
+                  {ex.explanation && <div style={{ color: 'rgba(255,255,255,0.4)' }}>{ex.explanation}</div>}
                 </div>
-                <button type="button" onClick={() => removeExample(idx)} className="text-red-500 hover:text-red-300">Remove</button>
+                <button type="button" onClick={() => removeExample(idx)}
+                  className="transition-colors" style={{ color: '#f87171' }}
+                  onMouseEnter={e => e.currentTarget.style.color = '#fca5a5'}
+                  onMouseLeave={e => e.currentTarget.style.color = '#f87171'}>
+                  <Trash2 size={13} />
+                </button>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="mb-8 p-4 border border-cyan-900/50 bg-cyan-950/5 rounded-lg">
-          <h3 className="text-cyan-400 font-bold mb-4 uppercase tracking-widest text-sm">Compiler Test Cases</h3>
-          <div className="space-y-3 mb-4">
+        {/* Test Cases */}
+        <div className="mb-8 p-4 rounded-xl" style={{ background: SECTION_BG, border: `1px solid ${BORDER}` }}>
+          <p className="text-[10px] font-bold uppercase tracking-widest mb-4" style={{ color: 'rgba(56,189,248,0.6)' }}>
+            Compiler Test Cases
+          </p>
+          <div className="space-y-2 mb-3">
             {tcVars.map((v, idx) => (
-              <div key={idx} className="flex gap-2">
-                <input value={v.name} onChange={e => handleTcVarChange(idx, 'name', e.target.value)} placeholder="Var Name" className="px-3 py-1 text-sm rounded bg-black border border-gray-700 text-cyan-300 w-1/3" />
-                <input value={v.value} onChange={e => handleTcVarChange(idx, 'value', e.target.value)} placeholder="Value" className="px-3 py-1 text-sm rounded bg-black border border-gray-700 text-white flex-1" />
-                {tcVars.length > 1 && <button type="button" onClick={() => removeTcVar(idx)} className="text-red-500">×</button>}
+              <div key={idx} className="flex gap-2 items-center">
+                <input value={v.name} onChange={e => handleTcVarChange(idx, 'name', e.target.value)}
+                  placeholder="Var Name"
+                  style={{ ...inputStyle, width: '33%', fontFamily: 'monospace', color: CYAN }}
+                  onFocus={focusIn} onBlur={focusOut} />
+                <input value={v.value} onChange={e => handleTcVarChange(idx, 'value', e.target.value)}
+                  placeholder="Value"
+                  style={{ ...inputStyle, flex: 1 }}
+                  onFocus={focusIn} onBlur={focusOut} />
+                {tcVars.length > 1 && (
+                  <button type="button" onClick={() => removeTcVar(idx)} style={{ color: '#f87171' }}>
+                    <X size={16} />
+                  </button>
+                )}
               </div>
             ))}
-            <button type="button" onClick={addTcVar} className="text-cyan-500 text-xs font-bold hover:underline">+ Add Variable Input</button>
-          </div>
-          
-          <div className="flex flex-col md:flex-row gap-2 mb-4">
-            <input value={tcOutput} onChange={e => setTcOutput(e.target.value)} placeholder="Expected Output" className="px-3 py-2 text-sm rounded bg-black border border-gray-700 text-green-400 flex-1" />
-            <select value={tcType} onChange={e => setTcType(e.target.value)} className={`px-3 py-2 text-sm rounded bg-black border font-bold ${tcType === 'Sample' ? 'border-green-600 text-green-400' : 'border-pink-600 text-pink-400'}`}>
-              <option value="Sample">Sample (Public)</option>
-              <option value="Hidden">Hidden (Secret)</option>
-            </select>
-            <button type="button" onClick={addTestCase} className="bg-white text-black text-xs font-bold px-4 py-2 rounded hover:bg-gray-200 transition">Save Test Case</button>
+            <button type="button" onClick={addTcVar}
+              className="text-xs font-bold transition-colors"
+              style={{ color: CYAN }}
+              onMouseEnter={e => e.currentTarget.style.color = '#fff'}
+              onMouseLeave={e => e.currentTarget.style.color = CYAN}>
+              + Add Variable Input
+            </button>
           </div>
 
-          <div className="space-y-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
+          <div className="flex flex-col md:flex-row gap-2 mb-4">
+            <input value={tcOutput} onChange={e => setTcOutput(e.target.value)}
+              placeholder="Expected Output"
+              style={{ ...inputStyle, flex: 1, color: '#4ade80' }}
+              onFocus={focusIn} onBlur={focusOut} />
+            <select value={tcType} onChange={e => setTcType(e.target.value)}
+              style={{
+                ...inputStyle,
+                width: 'auto',
+                fontWeight: 700,
+                color: tcType === 'Sample' ? '#4ade80' : '#f472b6',
+                borderColor: tcType === 'Sample' ? 'rgba(74,222,128,0.3)' : 'rgba(244,114,182,0.3)',
+              }}>
+              <option value="Sample" style={{ background: '#020617' }}>Sample (Public)</option>
+              <option value="Hidden" style={{ background: '#020617' }}>Hidden (Secret)</option>
+            </select>
+            <button type="button" onClick={addTestCase}
+              className="px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 whitespace-nowrap"
+              style={{ background: '#fff', color: '#000', border: 'none' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.85)'}
+              onMouseLeave={e => e.currentTarget.style.background = '#fff'}>
+              Save Test Case
+            </button>
+          </div>
+
+          <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
             {form.testcases.map((tc, idx) => (
-              <div key={idx} className="flex items-center gap-3 bg-black/60 p-2 rounded border border-gray-800">
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${tc.isSample ? 'bg-green-900 text-green-200' : 'bg-pink-900 text-pink-200'}`}>
+              <div key={idx} className="flex items-center gap-3 p-2 rounded-lg"
+                style={{ background: 'rgba(255,255,255,0.02)', border: `1px solid ${BORDER_SUB}` }}>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded uppercase"
+                  style={{
+                    background: tc.isSample ? 'rgba(74,222,128,0.1)' : 'rgba(244,114,182,0.1)',
+                    color: tc.isSample ? '#4ade80' : '#f472b6',
+                    border: `1px solid ${tc.isSample ? 'rgba(74,222,128,0.2)' : 'rgba(244,114,182,0.2)'}`,
+                  }}>
                   {tc.isSample ? 'Sample' : 'Hidden'}
                 </span>
-                <div className="text-[10px] font-mono flex-1 truncate text-gray-400">
-                  {tc.input.replace(/\n/g, ' | ')} → <span className="text-green-500">{tc.expectedOutput}</span>
+                <div className="text-[11px] font-mono flex-1 truncate" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                  {tc.input.replace(/\n/g, ' | ')} →{' '}
+                  <span style={{ color: '#4ade80' }}>{tc.expectedOutput}</span>
                 </div>
-                <button type="button" onClick={() => removeTestCase(idx)} className="text-red-500 hover:text-red-300">Remove</button>
+                <button type="button" onClick={() => removeTestCase(idx)} style={{ color: '#f87171' }}>
+                  <Trash2 size={13} />
+                </button>
               </div>
             ))}
           </div>
         </div>
 
-        <button type="submit" disabled={saving} className={`w-full py-4 rounded-xl font-bold text-lg transition-all shadow-lg ${saving ? 'bg-gray-700 cursor-not-allowed' : 'bg-cyan-500 hover:bg-cyan-400 text-black active:scale-[0.98]'}`}>
-          {saving ? 'Processing Request...' : (isEdit ? 'Update Problem' : 'Create Problem')}
+        {/* Submit */}
+        <button type="submit" disabled={saving}
+          className="w-full py-4 rounded-xl font-bold text-lg transition-all duration-200"
+          style={{
+            background: saving
+              ? 'rgba(255,255,255,0.05)'
+              : 'linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%)',
+            color: saving ? 'rgba(255,255,255,0.3)' : '#000',
+            border: 'none',
+            boxShadow: saving ? 'none' : '0 0 24px rgba(56,189,248,0.35)',
+            cursor: saving ? 'not-allowed' : 'pointer',
+          }}
+          onMouseEnter={e => { if (!saving) e.currentTarget.style.boxShadow = '0 0 36px rgba(56,189,248,0.5)'; }}
+          onMouseLeave={e => { if (!saving) e.currentTarget.style.boxShadow = '0 0 24px rgba(56,189,248,0.35)'; }}>
+          {saving ? '// processing...' : (isEdit ? 'Update Problem' : 'Create Problem')}
         </button>
       </form>
     </div>
